@@ -19,18 +19,28 @@
 #include <ctime>       // For ctime(), time_t
 #include <string>      // For std::string
 #include <cassert>     // For assert() statement
+#include <fstream>     // For std::[oi]fstream
+#include <sstream>     // For std::stringstream
 
 #ifndef DECLSPEC
 	#if defined(__WIN32__) || defined(__WINRT__)
 		#define DECLSPEC __declspec(dllexport)
 	#else
 		#if defined(__GNUC__) && __GNUC__ >= 4
-			#define DECLSPEC __attribute__((visibility("default")))
+			#define DECLSPEC __attribute__((__visibility__("default")))
 		#elif defined(__GNUC__) && __GNUC__ >= 2
 			#define DECLSPEC __declspec(dllexport)
 		#else
 			#define DECLSPEC
 		#endif
+	#endif
+#endif
+
+#ifndef CONSTRUCTOR
+	#if defined(__GNUC__) && __GNUC__ >= 4
+		#define CONSTRUCTOR __attribute__((__constructor__))
+	#else
+		#define CONSTRUCTOR
 	#endif
 #endif
 
@@ -449,6 +459,48 @@ namespace mtl
 		DECLSPEC void warning(const Args&... args) noexcept
 		{
 			__details::_Logger::call(__details::WARNING, __details::_Logger::warning_f, "WARNING", Options::C_YELLOW, args...);
+		}
+		
+		// Implements a specific option for gcc/g++ users.
+		namespace __details
+		{
+			//! @brief Stores the name of the configuration file.
+			inline const char* _filename(void)
+			{
+				return "log.cfg";
+			}
+			/**
+			 * @brief Load the configuration file (for gcc only) if it exists, else create it next to the
+			 * binary file.
+			 */
+			CONSTRUCTOR void _loadConfiguration(void)
+			{
+				std::ifstream config(mtl::log::__details::_filename());
+				if (config.good())
+				{
+					std::string foo;
+					char        equal;
+					config >> foo >> equal >> mtl::log::Options::ENABLE_LOG;
+					config >> foo >> equal >> mtl::log::Options::ENABLE_COLOR;
+					config >> foo >> equal >> mtl::log::Options::ENABLE_HORODATING;
+					config >> foo >> equal >> mtl::log::Options::ENABLE_SPACING;
+					config >> foo >> equal >> mtl::log::Options::ALPHA_BOOL;
+					config.close();
+				}
+				else
+				{
+					std::ofstream dump(mtl::log::__details::_filename());
+					if (dump.good())
+					{
+						dump << "enable_log = 1" << std::endl;
+						dump << "enable_color = 0" << std::endl;
+						dump << "enable_horodating = 0" << std::endl;
+						dump << "enable_spacing = 1" << std::endl;
+						dump << "alpha_bool = 1" << std::endl;
+						dump.close();
+					}
+				}
+			}
 		}
 	}
 }
