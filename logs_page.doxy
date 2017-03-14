@@ -157,7 +157,7 @@
  * You just need to tell at my library : "wait a minut, something else incoming later". You can do that with the 
  * hold_on() statement.
  * @code
- * log::info("This is the answer to the big question =>", mtl::log::hold_on());
+ * log::info("This is the answer to the big question =>", log::hold_on());
  * // Some years later
  * log::info("42");
  * @endcode
@@ -173,14 +173,14 @@
  * 
  * By the way, you could put the hold_on() statement where you want on the arguments.
  * @code
- * :log::info(log::hold_on(), "whatever"); // It will work
+ * log::info(log::hold_on(), "whatever"); // It will work
  * @endcode
  * 
  * @subsection id_config Out of source configuration
  * Ah, it looks pretty good, easy to use. But, one problem is still there, we're oblige to 
  * compile our code in order to change some parameters !@n
- * Let's suppose I work on a big gigantic project with you library, and I want to turn off
- * the logs, I'm oblige to recompile the file which sets @b ENABLE_LOG and make sure it disable it everywhere !
+ * Let's suppose I work on a big gigantic project with your library, and I want to turn off
+ * the logs, I'm oblige to recompile the file which sets @b ENABLE_LOG and make sure it disables it everywhere !
  * 
  * That's why you could, at the very beginning of your program, use a configuration file :
  * @code
@@ -191,7 +191,7 @@
  *    return 0;
  * }
  * @endcode
- * If myfile.conf doesn't exist, my library will create it and fill it with default values.@n
+ * If @b myfile.conf doesn't exist, my library will create it and fill it with default values.@n
  * As usual, it will not deal with absolute path or anything like that.
  * So let's take a look to this file :
  * @code
@@ -214,10 +214,10 @@
  * 0 ---> false
  * 1 ---> true
  * 
- * You canno't change the @b OUT value with this file because @b logs doesn't dispose of any file at the end, you'll
+ * You can't change the @b OUT value within the configuration file because @b logs doesn't dispose of any file at the end, you'll
  * have to do it by yourself.@n
  * 
- * @b {TYPE} and @b {DATE} are'nt required for the format value, here some example.
+ * @b {TYPE} and @b {DATE} aren't required for the format value, here some example.
  * @code
  * format =<{TYPE} {DATE}>:
  * format =\\{TYPE}//
