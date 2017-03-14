@@ -23,10 +23,6 @@
  * #include <logs.hpp>
  * @endcode
  * <br />
- * Then, because it belongs to my own namespace, a <b>namespace alias</b> may be handy :
- * @code
- * namespace log = mtl::log;
- * @endcode
  * You're now able to use my library :D<br /><br />
  * Fine, let's log something cool in age.<br />
  * In order to do so, you just need to call the \b log::info() statement, and precise any
@@ -35,15 +31,19 @@
  * std::string myName = "MTLCRBN";
  * log::info("Hello world from", myName);
  * @endcode
- * Which generates this output :
+ * Which generates this output by default:
  * @code
- * [INFO] : Hello world from MTLCRBN
+ * [INFO    ] : Hello world from MTLCRBN
  * @endcode
  * There are 2 others statements, for different purpose. At least, you have to choose between :
  *     - info()
  *     - warning()
  *     - error()
- *
+ * 
+ * They basically do the same thing, but it changes the @b {TYPE} of your log line (see below for further
+ * information).@n
+ * 
+ * More examples :
  * @code
  * std::string myName = "MTLCRBN";
  * log::info   ("Hello world from", myName);
@@ -53,9 +53,9 @@
  * @endcode
  * Output :
  * @code
- * [INFO   ] :  Hello world from MTLCRBN
- * [ERROR  ] :  Hello world from MTLCRBN as an error message
- * [WARNING] :  Hello world from MTLCRBN with 5 warnings
+ * [INFO    ] : Hello world from MTLCRBN
+ * [ERROR   ] : Hello world from MTLCRBN as an error message
+ * [WARNING ] : Hello world from MTLCRBN with 5 warnings
  * @endcode
  * <br /><br />
  * Ok, but what about the parameters I talked about earlier?<br />
@@ -72,7 +72,7 @@
  * 		<td><b>true</b> or <b>false</b></td>
  * 		<td>false</td>
  * 		<td>
- * 			Enable/Disable date in the braces.
+ * 			Enable/Disable date.
  * 			@code
  * 			[WARNING, Fri Dec  2 22:00:43 2016]
  * 			@endcode
@@ -105,23 +105,29 @@
  * 		<td><b>ALPHA_BOOL</b></td>
  * 		<td><b>true</b> or <b>false</b></td>
  * 		<td>true</td>
- * 		<td>This parameter allows you to display \b "true" instead of \b "1" when you display a \b bool with log functions.</td>
+ * 		<td>This parameter allows you to display @b "true" instead of @b "1" when you display a @b bool with log functions.</td>
  * 	</tr>
  * 	<tr>
  * 		<td><b>OUT</b></td>
  * 		<td>Any valid std::ostream address (<b>std::ostream*</b>)</td>
  * 		<td>&std::cout</td>
- * 		<td>Set which std::ostream you'll use to log.</td>
+ * 		<td>Sets which std::ostream you'll use to log.</td>
+ * 	</tr>
+ * 	<tr>
+ *    <td><b>FORMAT</b></td>
+ *    <td>Any std::string, with tags {TYPE} (where to display the log type) and {DATE} (where to display the date)</td>
+ * 		<td>[{TYPE} {DATE}] :</td>
+ * 		<td>Sets the output line format for your log line.</td>
  * 	</tr>
  * </table>
- * They are grouped and accessible in the \b mtl::logs::Options class. Accessing this class allows you to set their values and then customize your output.
+ * They are grouped and accessible in the @b logs::Options class. Accessing this class allows you to set their values and then customize your output.
  * Example :
  * @code
  * log::Options::ENABLE_LOG = true;  // Enable  logs for further calls of info(), warning(), error().
  * log::Options::ENABLE_LOG = false; // Disable logs for further calls of info(), warning(), error().
  * // log::Options::ENABLE_... = value;
  * @endcode
- * \b OUT parameter is a bit more complicated. It defines the \b std::ostream where the log should be dumped<br/>
+ * @b OUT parameter is a bit more complicated. It defines the \b std::ostream where the log should be dumped<br/>
  * It can be changed by giving the address of any \b valid std::ostream, of any types :
  * @code
  * log::Options::OUT = &std::cerr; // To log on stderr
@@ -151,9 +157,9 @@
  * You just need to tell at my library : "wait a minut, something else incoming later". You can do that with the 
  * hold_on() statement.
  * @code
- * mtl::log::info("This is the answer to the big question =>", mtl::log::hold_on());
+ * log::info("This is the answer to the big question =>", mtl::log::hold_on());
  * // Some years later
- * mtl::log::info("42");
+ * log::info("42");
  * @endcode
  * It will produce what you expect :
  * @code
@@ -167,7 +173,54 @@
  * 
  * By the way, you could put the hold_on() statement where you want on the arguments.
  * @code
- * mtl::log::info(mtl::log::hold_on(), "whatever"); // It will work
+ * :log::info(log::hold_on(), "whatever"); // It will work
+ * @endcode
+ * 
+ * @subsection id_config Out of source configuration
+ * Ah, it looks pretty good, easy to use. But, one problem is still there, we're oblige to 
+ * compile our code in order to change some parameters !@n
+ * Let's suppose I work on a big gigantic project with you library, and I want to turn off
+ * the logs, I'm oblige to recompile the file which sets @b ENABLE_LOG and make sure it disable it everywhere !
+ * 
+ * That's why you could, at the very beginning of your program, use a configuration file :
+ * @code
+ * int main(...)
+ * {
+ *    log::loadConfiguration("myfile.conf");
+ *    ...
+ *    return 0;
+ * }
+ * @endcode
+ * If myfile.conf doesn't exist, my library will create it and fill it with default values.@n
+ * As usual, it will not deal with absolute path or anything like that.
+ * So let's take a look to this file :
+ * @code
+ * enable_log = 1
+ * enable_color = 0
+ * enable_horodating = 0
+ * enable_spacing = 1
+ * alpha_bool = 0
+ * format =[{TYPE} {DATE}] : 
+ * 
+ * # This will not be parsed.
+ * # format value have to be like this :
+ * # "format =" is just the lvalue. Right after the sequence you wanna display starts.
+ * # Inside the sequence, you could use {TYPE} to display the logging type.
+ * #                                    {DATE} to display the horodating.
+ * # Spaces count.
+ * # IMPORTANT Do not change line order !
+ * @endcode
+ * Here you could easily change some values to configure the output without recompile anything !@n
+ * 0 ---> false
+ * 1 ---> true
+ * 
+ * You canno't change the @b OUT value with this file because @b logs doesn't dispose of any file at the end, you'll
+ * have to do it by yourself.@n
+ * 
+ * @b {TYPE} and @b {DATE} are'nt required for the format value, here some example.
+ * @code
+ * format =<{TYPE} {DATE}>:
+ * format =\\{TYPE}//
  * @endcode
  * 
  * @subsection id_sum   Summary
@@ -177,7 +230,6 @@
  * #include <string>
  * #include <iostream>
  * 
- * namespace log = mtl::log;
  * 
  * int main(int argc, char** argv)
  * {
@@ -204,6 +256,9 @@
  *      for(int i=1;i<6;i++)
  *          log::info(log::hold_on(), i);
  *      log::info("--> Done :D");
+ *      log::info(true, false);
+ *      log::Options::ALPHA_BOOL = true;
+ *      log::info(true, false);
  *  	return 0;
  * }
  * @endcode
@@ -213,6 +268,8 @@
  * [<b style="color:red">ERROR</b>  , Fri Dec  2 22:28:41 2016] : You forgot to provide arguments, Because you must do it !<br />
  * [<b style="color:yellow">WARNING</b>, Fri Dec  2 22:28:41 2016] :  Heavy logs incoming. 15000 messages on sight !<br />
  * [<b style="color:green">INFO</b>   , Fri Dec  2 22:28:41 2016] : Let's count to 5 --> 1 2 3 4 5 --> Done :D
+ * [<b style="color:green">INFO</b>   , Fri Dec  2 22:28:41 2016] : 1 0
+ * [<b style="color:green">INFO</b>   , Fri Dec  2 22:28:41 2016] : true false
  *
  * 
  * @section id_doc      Documentation
