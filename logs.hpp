@@ -492,15 +492,15 @@ namespace log
             std::ofstream dump(fname);
             if (dump.good())
             {
-                dump << "enable_log = 1" << std::endl;
-                dump << "enable_color = 0" << std::endl;
-                dump << "enable_horodating = 0" << std::endl;
-                dump << "enable_spacing = 1" << std::endl;
-                dump << "alpha_bool = 1" << std::endl;
-                dump << "format =[{TYPE} {DATE}] :" << std::endl << std::endl;
+                dump << "ENABLE_LOG:bool = 1" << std::endl;
+                dump << "ENABLE_COLOR:bool = 0" << std::endl;
+                dump << "ENABLE_HORODATING:bool = 0" << std::endl;
+                dump << "ENABLE_SPACING:bool = 1" << std::endl;
+                dump << "ALPHA_BOOL:bool = 1" << std::endl;
+                dump << "FORMAT:string =[{TYPE} {DATE}] :" << std::endl << std::endl;
                 dump << "# This will not be parsed." << std::endl;
-                dump << "# format value has to be like this :" << std::endl;
-                dump << "# \"format =\" is just the lvalue. Right after the sequence you wanna display starts." << std::endl;
+                dump << "# FORMAT value has to be like this :" << std::endl;
+                dump << "# \"FORMAT:string =\" is just the lvalue. Right after the sequence you wanna display starts." << std::endl;
                 dump << "# Inside the sequence, you could use {TYPE} to display the logging type." << std::endl;
                 dump << "#                                    {DATE} to display the horodating." << std::endl;
                 dump << "# Spaces count." << std::endl;
