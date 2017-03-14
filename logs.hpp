@@ -510,6 +510,4 @@ namespace log
         }
     }
 }
-
-
 #endif
