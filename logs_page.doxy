@@ -1,5 +1,5 @@
 /**
- * @page Logs 1.2
+ * @page id_page Logs 1.2
  * 
  * @section id_intro Synopsis
  * This Header-only library provides logging configurable functions that allows you to customize output format.<br/>
