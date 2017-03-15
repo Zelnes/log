@@ -471,7 +471,7 @@ namespace log
      * it with default values.
      * @param[in] fname The name you want for this file.
      */
-    void loadConfiguration(const std::string& fname)
+    inline void loadConfiguration(const std::string& fname)
     {
         std::ifstream config(fname);
         if (config.good())
