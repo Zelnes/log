@@ -1,490 +1,356 @@
-/**
- * @file logs.hpp
- * @brief This file provides some functions to log some information.
- * 
- * It requires -std=c++11, or any further standard version, in order to compile.<br />
- * To build up documentation, just run :
- * @code
- * doxygen Doxyfile
- * @endcode
- * @author MTLCRBN
- * @version 1.2
- * @date The 12th of December 2016
- */
-#ifndef LOGS_HPP_INCLUDED
-#define LOGS_HPP_INCLUDED
+#ifndef MTL_LOGS_HPP_INCLUDED
+#define MTL_LOGS_HPP_INCLUDED
 
-#include <iostream>    // For std::ostream, std::endl
-#include <chrono>      // For std::chrono
-#include <ctime>       // For ctime(), time_t
-#include <string>      // For std::string
-#include <cassert>     // For assert() statement
-#include <fstream>     // For std::[oi]fstream
-#include <sstream>     // For std::stringstream
+#include <chrono>
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+
+// if -pthread or -fopenmp provided only
+#ifdef _REENTRANT
+#   include <thread>
+#   include <mutex>
+#endif
+
+#ifndef MTL_LOG_NAMESPACE
+#   define MTL_LOG_NAMESPACE mlog
+#endif
 
 #ifndef DECLSPEC
-    #if defined(__WIN32__) || defined(__WINRT__)
-        #define DECLSPEC __declspec(dllexport)
-    #else
-        #if defined(__GNUC__) && __GNUC__ >= 4
-            #define DECLSPEC __attribute__((__visibility__("default")))
-        #elif defined(__GNUC__) && __GNUC__ >= 2
-            #define DECLSPEC __declspec(dllexport)
-        #else
-            #define DECLSPEC
-        #endif
-    #endif
-#endif
-
-#ifndef UNUSED
-    #ifdef __GNUC__
-        #define UNUSED(var) __attribute__((unused)) var
-    #else
-        // Sorry for non g++ users, you'll get an ugly warning.
-        #define UNUSED(var) var
-    #endif
+#   if defined(__WIN32__) || defined(__WINRT__)
+#       define DECLSPEC __declspec(dllexport)
+#   else
+#       if defined(__GNUC__) && __GNUC__ >= 4
+#           define DECLSPEC __attribute__((__visibility__("default")))
+#       elif defined(__GNUC__) && __GNUC__ >= 2
+#           define DECLSPEC __declspec(dllexport)
+#       else
+#           define DECLSPEC
+#       endif
+#   endif
 #endif
 
 
-namespace log
+namespace MTL_LOG_NAMESPACE
 {
-    /**
-     * @brief Display every argument in \b args, one by one, with an info tag [INFO].<br />
-     * Depending of the parameter \b ENABLE_HORODATING, it could also display a date inside the tag.<br />
-     * You do not have to carry the way with template parameter.
-     * @param[in] args It's a variadic number of argument, of any type.
-     * 
-     * Example :
-     * @code
-     * int foo         = 18;
-     * std::string bar = "useless";
-     * log::info("Some information about", foo, bar, "things");
-     * // Output : [INFO   ] : Some information about 18 useless things
-     * @endcode
-     * @pre \b args must contains only variables which accept \b << operator.
-     */
-    template<typename... Args>
-    DECLSPEC void info(const Args&... args) noexcept;
-    /**
-     * @brief Display every argument \b args, one by one, with an error tag [ERROR].<br />
-     * Depending of the parameter \b ENABLE_HORODATING, it could also display a date inside the tag.<br />
-     * You do not have to carry the way with template parameter.
-     * @param[in] args It's a variadic number of argument.
-     * 
-     * Example :
-     * @code
-     * int test = argc;
-     * if (test == 1)
-     * {
-     *      log::error("You're suppose to provide argument while invoking", argv[0]);
-     * }
-     * // Output : [ERROR  ] :  You're suppose to provide argument while invoking ./a.out
-     * @endcode
-     * @pre \b args must contains only variables which accept \b << operator.
-     */
-    template<typename... Args>
-    DECLSPEC void error(const Args&... args) noexcept;
-    /**
-     * @brief Display every argument in \b args, one by one, with a warning tag [WARNING].<br />
-     * Depending of the parameter \b ENABLE_HORODATING, it could also display a date inside the tag.<br />
-     * You do not have to carry the way with template parameter.
-     * @param[in] args It's a variadic number of argument.
-     * 
-     * Example :
-     * @code
-     * int test = argc;
-     * if (test == 1)
-     * {
-     *      log::warning("You don't provide configuration file name, default configuration will be use");
-     * }
-     * // Output : [WARNING] :  You don't provide configuration file name, default configuration will be use
-     * @endcode
-     * @pre \b args must contains only variables which accept \b << operator.
-     */
-    template<typename... Args>
-    DECLSPEC void warning(const Args&... args) noexcept;
+#   define MTL_LOG_DECLARE(funcName) \
+        template<typename... Args> DECLSPEC void funcName(const Args&... args);
+    MTL_LOG_DECLARE(info)
+    MTL_LOG_DECLARE(warning)
+    MTL_LOG_DECLARE(error)
+    MTL_LOG_DECLARE(fatal)
+    MTL_LOG_DECLARE(debug)
+    inline DECLSPEC void loadConfiguration(const std::string& fname);
+#   undef MTL_LOG_DECLARE
     
     namespace __details
     {
         class _Logger;
+#       define MTL_LOG_FRIEND(funcName) \
+            template<typename... Args> friend void MTL_LOG_NAMESPACE::funcName(const Args&... args);
+#       define __DETAILS_FRIENDSHIPS \
+            MTL_LOG_FRIEND(info) \
+            MTL_LOG_FRIEND(warning) \
+            MTL_LOG_FRIEND(error) \
+            MTL_LOG_FRIEND(fatal) \
+            MTL_LOG_FRIEND(debug)
         
-        /*
-         * This class allow to instanciate static variable member directly on the header, by playing with templates.
-         * You don't have to mess with this class.
-         * No doxygen commentary block, because I don't want to parse this class for the documentation.
-         */
+        class __Header final
+        {
+            public:
+                __Header(void) = delete;
+                __Header(const std::string& str) : pattern(str)
+                {
+                    this->build();
+                }
+                __Header& operator=(const std::string& str)
+                {
+                    this->pattern = str;
+                    this->build();
+                    return *this;
+                }
+                ~__Header(void) = default;
+                void display(std::ostream& out, const std::string& type, const char *const color,
+                             const char *const nocolor, bool colorEnabled)
+                {
+                    for(const std::pair<int, int>& p : this->chunks)
+                    {
+                        switch(p.first)
+                        {
+                            case MTL_LOG_NAMESPACE::__details::__Header::TAG_DATE_ID:
+                            {
+                                time_t  tt  = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+                                std::tm ltm = *localtime(&tt);
+                                this->printTwoDigits(out, ltm.tm_mon+1) << '/';
+                                this->printTwoDigits(out, ltm.tm_mday)  << '/';
+                                out << ltm.tm_year + 1900 << ' ';
+                                this->printTwoDigits(out, ltm.tm_hour) << ':';
+                                this->printTwoDigits(out, ltm.tm_min) << ':';
+                                this->printTwoDigits(out, ltm.tm_sec);
+                                break;
+                            }
+                            case MTL_LOG_NAMESPACE::__details::__Header::TAG_THREAD_ID:
+#                               ifdef _REENTRANT
+                                out << "0x" << std::hex << std::this_thread::get_id() << std::dec;
+#                               endif
+                                break;
+                            case MTL_LOG_NAMESPACE::__details::__Header::TAG_TYPE_ID:
+                                if (colorEnabled)
+                                {
+                                    out << color;
+                                }
+                                out << type;
+                                if (colorEnabled)
+                                {
+                                    out << nocolor;
+                                }
+                                break;
+                            default:
+                                for(int i=p.first;i<p.second;++i)
+                                {
+                                    out << this->pattern.at(i);
+                                }
+                        }
+                    }
+                }
+            private:
+                static constexpr const int         TAG_DATE_ID    = -1;
+                static constexpr const int         TAG_TYPE_ID    = -2;
+                static constexpr const int         TAG_THREAD_ID  = -3;
+                static constexpr const char *const TAG_TYPE       = "{TYPE}";
+                static constexpr const char *const TAG_THREAD     = "{THREAD}";
+                static constexpr const char *const TAG_DATE       = "{DATE}";
+                std::string                      pattern;
+                std::vector<std::pair<int, int>> chunks;
+                inline std::ostream& printTwoDigits(std::ostream& out, int value)
+                {
+                    out << ((value < 10) ? "0" : "") << value;
+                    return out;
+                }
+                void splitAndMerge(int begin, int end, int id)
+                {
+                    auto it=this->chunks.begin();
+                    for(;it!=this->chunks.end();++it)
+                    {
+                        if (it->second > begin)
+                        {
+                            std::pair<int, int> mid(id, static_cast<int>(std::string::npos));
+                            decltype(mid)       last(begin+end, it->second);
+                            it->second = begin;
+                            it = this->chunks.insert(std::next(it), last);
+                            this->chunks.insert(it, mid);
+                            break;
+                        }
+                    }
+                }
+#               define SPLIT_AND_MERGE(var, tag, id) \
+                    if (var != std::string::npos)\
+                    {\
+                        this->splitAndMerge(static_cast<int>(var),\
+                            static_cast<int>(std::string(MTL_LOG_NAMESPACE::__details::__Header::tag).length()), id);\
+                    }
+                void build(void)
+                {
+                    this->chunks.clear();
+                    std::size_t typePos    = this->pattern.find(MTL_LOG_NAMESPACE::__details::__Header::TAG_TYPE);
+                    std::size_t threadPos  = this->pattern.find(MTL_LOG_NAMESPACE::__details::__Header::TAG_THREAD);
+                    std::size_t datePos    = this->pattern.find(MTL_LOG_NAMESPACE::__details::__Header::TAG_DATE);
+                    this->chunks.push_back({0, static_cast<int>(this->pattern.size())});
+                    SPLIT_AND_MERGE(typePos,   TAG_TYPE, TAG_TYPE_ID);
+                    SPLIT_AND_MERGE(datePos,   TAG_DATE, TAG_DATE_ID);
+                    SPLIT_AND_MERGE(threadPos, TAG_THREAD, TAG_THREAD_ID);
+                }
+#               undef SPLIT_AND_MERGE
+        };
         template<typename T>
         class __Static_declarer
         {
-            public:
-                static bool          ENABLE_HORODATING; //!< If you want the date with every line of log,          @b false                    by default.
-                static bool          ENABLE_LOG;        //!< If you want to switch on the logs,                    @b true                     by default.
-                static bool          ENABLE_COLOR;      //!< If you want some colors with the tags,                @b false                    by default.
-                static bool          ENABLE_SPACING;    //!< If you want a space between each argument,            @b true                     by default.
-                static std::ostream* OUT;               //!< The std::ostream use to put logs,                     @b &std::cout               by default.
-                static bool          ALPHA_BOOL;        //!< If you want the boolean to be display as text,        @b true                     by default.
-                static std::string   FORMAT;            //!< The header format for the type and the date position, <b>"[{TYPE} {DATE}] : "</b> by default.
-            
-            private:
-                static const char* C_YELLOW; //!< The code for "yellow + bold"   with xterm.
-                static const char* C_RED;    //!< The code for "red    + bold"   with xterm.
-                static const char* C_GREEN;  //!< The code for "green  + bold"   with xterm.
-                static const char* C_BLANK;  //!< The code for "normal settings" with xterm.
+            protected:
+                static bool          ENABLE_LOG;
+                static bool          ENABLE_COLOR;
+                static bool          ENABLE_SPACING;
+                static bool          ENABLE_DEBUG;
+                static bool          ENABLE_INFO;
+                static bool          ENABLE_ERROR;
+                static bool          ENABLE_WARNING;
+                static bool          ENABLE_FATAL;
+                static std::ostream* OUT;
+                static bool          ENABLE_ALPHA_BOOL;
+                static MTL_LOG_NAMESPACE::__details::__Header FORMAT;
                 
+            private:
+#               ifdef _REENTRANT
+                static std::mutex    MUTEX;
+#               endif
+                static constexpr const char *const C_YELLOW = "\033[1;33m";
+                static constexpr const char *const C_RED    = "\033[1;31m";
+                static constexpr const char *const C_GREEN  = "\033[1;32m";
+                static constexpr const char *const C_BLUE   = "\033[1;36m";
+                static constexpr const char *const C_BLANK  = "\033[0m";
                 friend class _Logger;
-                template<typename... Args> friend void log::error  (const Args&... args) noexcept;
-                template<typename... Args> friend void log::info   (const Args&... args) noexcept;
-                template<typename... Args> friend void log::warning(const Args&... args) noexcept;
+                __DETAILS_FRIENDSHIPS
                 __Static_declarer(void) = delete;
-            
         };
-        // Set every parameter to there default values.
-        template<typename T> bool          __Static_declarer<T>::ENABLE_HORODATING = false;
-        template<typename T> bool          __Static_declarer<T>::ENABLE_LOG        = true;
-        template<typename T> bool          __Static_declarer<T>::ENABLE_COLOR      = false;
-        template<typename T> bool          __Static_declarer<T>::ENABLE_SPACING    = true;
-        template<typename T> bool          __Static_declarer<T>::ALPHA_BOOL        = true;
-        template<typename T> std::ostream* __Static_declarer<T>::OUT               = &std::cout;
-        template<typename T> const char*   __Static_declarer<T>::C_YELLOW          = "\033[1;33m";
-        template<typename T> const char*   __Static_declarer<T>::C_RED             = "\033[1;31m";
-        template<typename T> const char*   __Static_declarer<T>::C_GREEN           = "\033[1;32m";
-        template<typename T> const char*   __Static_declarer<T>::C_BLANK           = "\033[0m";
-        template<typename T> std::string   __Static_declarer<T>::FORMAT            = "[{TYPE} {DATE}] :";
+#       define STATIC_DECLARATION(type, name, value) \
+            template<typename T> type __Static_declarer<T>::name = value;
+        STATIC_DECLARATION(bool,          ENABLE_LOG,        true)
+        STATIC_DECLARATION(bool,          ENABLE_COLOR,      false)
+        STATIC_DECLARATION(bool,          ENABLE_SPACING,    true)
+        STATIC_DECLARATION(bool,          ENABLE_DEBUG,      true)
+        STATIC_DECLARATION(bool,          ENABLE_INFO,       true)
+        STATIC_DECLARATION(bool,          ENABLE_ERROR,      true)
+        STATIC_DECLARATION(bool,          ENABLE_WARNING,    true)
+        STATIC_DECLARATION(bool,          ENABLE_FATAL,      true)
+        STATIC_DECLARATION(std::ostream*, OUT,               &std::cout)
+        STATIC_DECLARATION(bool,          ENABLE_ALPHA_BOOL, true)
+#       ifdef _REENTRANT
+        template<typename T> std::mutex __Static_declarer<T>::MUTEX;
+#       endif
+        STATIC_DECLARATION(MTL_LOG_NAMESPACE::__details::__Header, FORMAT, std::string("[{TYPE} {DATE} {THREAD}] :"))
+#       undef STATIC_DECLARATION
     }
     
-    /**
-     * @brief Embeds parameters as public static members, so you could easily change (or mess with) settings.
-     * @warning It isn't recommended to enable color when you want to dump logs to a file
-     * because it may causes issues while parsing these files later.
-     * @warning \b Colors are provide by using \b xterm standards, it may not work for other shells.
-     * @warning \b OUT may be an usable and valid \b std::ostream, there is no warranty if you mess up with that.
-     * 
-     * Some examples :
-     * @code
-     * log::Options::ENABLE_COLOR      = true; // Or false.
-     * log::Options::ENABLE_LOG        = true; // Or false.
-     * log::Options::ENABLE_HORODATING = true; // Or false.
-     * log::Options::ENABLE_COLOR      = true; // Or false.
-     * log::Options::ALPHA_BOOL        = true; // Or false.
-     * 
-     * std::ofstream                         file(...); // Open the file before, of course.
-     * std::ostringstream                    os;
-     * struct MyOstream : std::ostream {...} mos;
-     * log::Options::OUT = &file;
-     * log::Options::OUT = &os;
-     * log::Options::OUT = &mos;
-     * log::Options::OUT = &std::cerr;
-     * // Keep in mind, the pointer given to OUT must remain valid, otherwise it could produce impredictible behavior.
-     * // Keep also in mind than std::ostream is protected by default, that mean than "std::ostream os;" won't work !
-     * @endcode
-     */
-    class DECLSPEC Options final : public __details::__Static_declarer<Options>
+#   define MTL_LOG_GET_SET(type, name, option) \
+        static inline void enable##name(type value) noexcept\
+        {\
+            MTL_LOG_NAMESPACE::Options::option = value;\
+        }\
+        static inline type is##name##Enabled(void) noexcept\
+        {\
+            return MTL_LOG_NAMESPACE::Options::option;\
+        }
+    class DECLSPEC Options final : public MTL_LOG_NAMESPACE::__details::__Static_declarer<MTL_LOG_NAMESPACE::Options>
     {
-        private:
+        public:
             Options(void) = delete;
+            MTL_LOG_GET_SET(bool, Log,       ENABLE_LOG)
+            MTL_LOG_GET_SET(bool, Color,     ENABLE_COLOR)
+            MTL_LOG_GET_SET(bool, Spacing,   ENABLE_SPACING)
+            MTL_LOG_GET_SET(bool, AlphaBool, ENABLE_ALPHA_BOOL)
+            MTL_LOG_GET_SET(bool, Debug,     ENABLE_DEBUG)
+            MTL_LOG_GET_SET(bool, Warning,   ENABLE_WARNING)
+            MTL_LOG_GET_SET(bool, Error,     ENABLE_ERROR)
+            MTL_LOG_GET_SET(bool, Fatal,     ENABLE_FATAL)
+            MTL_LOG_GET_SET(bool, Info,      ENABLE_INFO)
+            static void setOutputStream(std::ostream* out)
+            {
+                MTL_LOG_NAMESPACE::Options::OUT = out;
+            }
+            static void setFormat(const std::string& format)
+            {
+                MTL_LOG_NAMESPACE::Options::FORMAT = format;
+            }
         
     };
     
+#   undef MTL_LOG_GET_SET
     namespace __details
     {
-        /*
-         * Just a single structure to define  a hold_on tag.
-         * As usual, don't even try to use it raw, this is pointless.
-         */
-        struct _HoldOn final
-        {
-            _HoldOn(void)                            = default;
-            _HoldOn(_HoldOn&& other)                 = default;
-            _HoldOn(const _HoldOn& other)            = default;
-            _HoldOn& operator=(const _HoldOn& other) = delete;
-            _HoldOn& operator=(_HoldOn&& other)      = delete;
-        };
-        //! @cond HIDE_THIS_DOXYGEN
-        // All different states for a log channel such as info, error, warning.
-        typedef enum
-        {
-            SKIP,    //!< The state to skip a call.
-            NOTHING, //!< The usual state, nothing special.
-            HOLD     //!< The state to hold on for the next call.
-        } _flags_e;
-        
-        // To know which channel is used.
-        typedef enum
-        {
-            ERROR,   //!< Error   channel is used.
-            WARNING, //!< Warning channel is used.
-            INFO     //!< Info    channel is used.
-        } _current_e;
-        //! @endcond
-        
-        /*
-         * Embeds the channels states.
-         * As usual, don't even try to use it raw, this is pointless.
-         */
-        template<typename Foo>
-        struct __States_declarer
-        {
-            protected:
-                static _flags_e   info_f;    //!< The state of the info    channel.
-                static _flags_e   warning_f; //!< The state of the warning channel.
-                static _flags_e   error_f;   //!< The state of the error   channel.
-                static _current_e curr_c;    //!< Which channel is used.
-                static bool       isHolding; //!< To indicate if the current input beg for holding on.
-                __States_declarer(void) = delete;
-        };
-        
-        // States initialisation.
-        template<typename Foo> _flags_e   __States_declarer<Foo>::info_f    = NOTHING;
-        template<typename Foo> _flags_e   __States_declarer<Foo>::error_f   = NOTHING;
-        template<typename Foo> _flags_e   __States_declarer<Foo>::warning_f = NOTHING;
-        template<typename Foo> _current_e __States_declarer<Foo>::curr_c    = INFO;
-        template<typename Foo> bool       __States_declarer<Foo>::isHolding = false;
-        
-        /*
-         * This class protects the common part of error(), warning() and info().
-         * You cannot mess with this class, sorry.
-         * No doxygen commentary block, because I don't want to parse this class for the documentation.
-         */
-        class _Logger final : public __States_declarer<_Logger>
+        class _Logger final
         {
             private:
                 _Logger(void) = delete;
-                template<typename... Args> friend void log::error  (const Args&... args) noexcept;
-                template<typename... Args> friend void log::info   (const Args&... args) noexcept;
-                template<typename... Args> friend void log::warning(const Args&... args) noexcept;
+                __DETAILS_FRIENDSHIPS
                 
-                /**
-                 * @brief Terminal case, this function is call when there is no more arguments.<br />
-                 * So, at the end, it displays a newline.
-                 */
-                static void _print_(void) noexcept
+                static void _print_(void)
                 {
-                    if (_Logger::isHolding)
-                    {
-                        _Logger::isHolding = false;
-                        *log::Options::OUT << std::flush;
-                    }
-                    else
-                    {
-                        *log::Options::OUT << std::endl;
-                    }
+                    *MTL_LOG_NAMESPACE::Options::OUT << std::endl;
                 }
-                /**
-                 * @brief Changes the state of \b f if the current value is HOLD.
-                 * @param[in,out] f The current flag to check.
-                 */
-                static void changeState(_flags_e& f) noexcept
-                {
-                    if (f == HOLD)
-                    {
-                        *log::Options::OUT << std::endl;
-                        f = SKIP;
-                    }
-                }
-                /**
-                 * @brief Change the curr_c parameter and manage flags.
-                 * @param c The new channel you're using.
-                 */
-                static void setCurrent(const _current_e c) noexcept
-                {
-                    if (c != _Logger::curr_c)
-                    {
-                        _Logger::changeState(info_f);
-                        _Logger::changeState(error_f);
-                        _Logger::changeState(warning_f);
-                        _Logger::curr_c = c;
-                    }
-                }
-                /**
-                 * @brief General case, it will display the head of the \b args list \b a, and make a recursive call
-                 * with the rest of the list.
-                 * @param[in] a    The current argument to display, of any type.
-                 * @param[in] args The rest of the argument list.
-                 */
+                
                 template<typename Actual, typename... Args>
-                static void _print_(const Actual& a, const Args&... args) noexcept
+                static void _print_(const Actual& a, const Args&... args)
                 {
-                    if (log::Options::ENABLE_SPACING)
+                    if (MTL_LOG_NAMESPACE::Options::ENABLE_SPACING)
                     {
-                        *log::Options::OUT << ' ';
+                        *MTL_LOG_NAMESPACE::Options::OUT << ' ';
                     }
-                    *log::Options::OUT << a;
-                    _Logger::_print_(args...);
+                    *MTL_LOG_NAMESPACE::Options::OUT << a;
+                    MTL_LOG_NAMESPACE::__details::_Logger::_print_(args...);
                 }
-                /**
-                 * @brief Specific case, encountering the hold_on tag end the recursion prematuraly.
-                 * @param[in] tag  The hold_on tag, just here to catch this case (unused actually).
-                 * @param[in] args The rest of the argument list.
-                 */
+                
+                static void assertValidity(void)
+                {
+                    if (MTL_LOG_NAMESPACE::Options::OUT == nullptr)
+                    {
+                        throw std::ios_base::failure("OUT must not be nullptr !");
+                    }
+                    if (!MTL_LOG_NAMESPACE::Options::OUT->good())
+                    {
+                        throw std::ios_base::failure("OUT must be a \"good()\" std::ostream* !");
+                    }
+                }
+                
                 template<typename... Args>
-                static void _print_(UNUSED(const _HoldOn& tag), const Args&... args) noexcept
+                static void _start_print(const char *const tag, const char *const color, const Args&... args)
                 {
-                    #ifndef __GNUC__
-                        // Nah, I'm such a nice guy, you won't get any warning.
-                        (void)tag;
-                    #endif
-                    _Logger::isHolding = true;
-                    switch(_Logger::curr_c)
+#                   ifdef _REENTRANT
+                    MTL_LOG_NAMESPACE::Options::MUTEX.lock();
+#                   endif
+                    MTL_LOG_NAMESPACE::__details::_Logger::assertValidity();
+                    *MTL_LOG_NAMESPACE::Options::OUT << ((MTL_LOG_NAMESPACE::Options::isAlphaBoolEnabled()) ? std::boolalpha
+                                                                                                            : std::noboolalpha);
+                    MTL_LOG_NAMESPACE::Options::FORMAT.display(*MTL_LOG_NAMESPACE::Options::OUT,
+                                                               tag, color,
+                                                               MTL_LOG_NAMESPACE::Options::C_BLANK,
+                                                               MTL_LOG_NAMESPACE::Options::isColorEnabled());
+                    if (!MTL_LOG_NAMESPACE::Options::ENABLE_SPACING)
                     {
-                        case WARNING:
-                            _Logger::warning_f = HOLD;
-                            break;
-                        case ERROR:
-                            _Logger::error_f = HOLD;
-                            break;
-                        default:
-                            _Logger::info_f = HOLD;
+                        *MTL_LOG_NAMESPACE::Options::OUT << ' ';
                     }
-                    _Logger::_print_(args...);
+                    MTL_LOG_NAMESPACE::__details::_Logger::_print_(args...);
+#                   ifdef _REENTRANT
+                    MTL_LOG_NAMESPACE::Options::MUTEX.unlock();
+#                   endif
                 }
-                //! @brief Ensures the validity of \b OUT.
-                static void assertValidity(void) noexcept
-                {
-                    assert(log::Options::OUT != nullptr && "OUT must not be nullptr !");
-                    assert(log::Options::OUT->good()    && "OUT must be a \"good()\" std::ostream* !");
-                }
-                /**
-                 * @brief Start to read the argument list \b args, displays the tag \b tag with the specified color \b color.
-                 * The color appears only if \b ENABLE_COLOR is set to true.
-                 * @param[in] tag   The text to display inside the tag at the beginning of the line.
-                 * @param[in] color The color code to use when the tag is display.
-                 * @param[in] args  The argument list.
-                 * @pre \b OUT must not be nullptr.
-                 * @pre \b OUT must be a valid std::ostream (OUT->good() must return true).
-                 */
-                template<typename... Args>
-                static void _start_print(const char *const tag, const char *const color, const Args&... args) noexcept
-                {
-                    _Logger::assertValidity();
-                    if (log::Options::ENABLE_LOG)
-                    {
-                        if (log::Options::ALPHA_BOOL)
-                        {
-                            *log::Options::OUT << std::boolalpha;
-                        }
-                        else
-                        {
-                            *log::Options::OUT << std::noboolalpha;
-                        }
-                        std::string            header(log::Options::FORMAT);
-                        std::ostringstream     replacing;
-                        std::string::size_type posType = header.find("{TYPE}");
-                        std::string::size_type lenTags = std::string("{TYPE}").size();
-                        if (posType != std::string::npos)
-                        {
-                            if (log::Options::ENABLE_COLOR)
-                            {
-                                replacing << color;
-                            }
-                            replacing << tag;
-                            if (log::Options::ENABLE_COLOR)
-                            {
-                                replacing << log::Options::C_BLANK;
-                            }
-                            header.replace(posType, lenTags, replacing.str());
-                        }
-                        std::string::size_type posDate = header.find("{DATE}");
-                        if (log::Options::ENABLE_HORODATING && posDate != std::string::npos)
-                        {
-                            time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-                            std::string date(ctime(&tt));
-                            date.pop_back();
-                            header.replace(posDate, lenTags, date);
-                        }
-                        if (!log::Options::ENABLE_HORODATING && posDate != std::string::npos)
-                        {
-                            header.replace(posDate, lenTags, "");
-                        }
-                        *log::Options::OUT << header;
-                        if (!log::Options::ENABLE_SPACING)
-                        {
-                            *log::Options::OUT << ' ';
-                        }
-                        _Logger::_print_(args...);
-                    }
-                }
-                /**
-                 * @brief Encapsulates a call to generalize this part.
-                 * @param[in]     v     The current value to affect at \b _Logger.
-                 * @param[in,out] f     The flag to manage.
-                 * @param[in]     tag   The tag you wanna display.
-                 * @param[in]     color The color of the tag.
-                 * @param[in]     args  Every argument to display.
-                 */
-                template<typename... Args>
-                static void call(_current_e v, _flags_e& f, const char *const tag, const char *const color, const Args&... args)
-                {
-                    if (f == NOTHING)
-                    {
-                        _Logger::setCurrent(v);
-                        _Logger::_start_print(tag, color, args...);
-                    }
-                    else if(f == HOLD)
-                    {
-                        f = NOTHING;
-                        _Logger::_print_(args...);
-                    }
-                    else
-                    {
-                        f = NOTHING;
-                    }
-                }
+            
         };
-        
     }
-    /**
-     * @brief Return a hold_on tag.
-     * It will prevent the current line that it's not the end for this log line, and wait for something
-     * else before printing the newline.
-     * @code
-     * log::info("Loading file ...", log::hold_on()); // Display only [INFO] : Loading file ...
-     * // Do stuff while loading the file.
-     * log::info("done"); // add done at the end of the previous output.
-     * // Display [INFO] : Loading file ... done
-     * @endcode
-     * Keep in mind, if you call another log method (like, in our case, error()), it will cancel the
-     * "done" part in that case (the next call to be more precise) !
-     * @return The hold_on tag.
-     */
-    DECLSPEC inline __details::_HoldOn hold_on(void) noexcept
-    {
-        return __details::_HoldOn();
-    }
-    template<typename... Args>
-    DECLSPEC void error(const Args&... args) noexcept
-    {
-        __details::_Logger::call(__details::ERROR, __details::_Logger::error_f, "ERROR  ", Options::C_RED, args...);
-    }
-    template<typename... Args>
-    DECLSPEC void info(const Args&... args) noexcept
-    {
-        __details::_Logger::call(__details::INFO, __details::_Logger::info_f, "INFO   ", Options::C_GREEN, args...);
-    }
-    template<typename... Args>
-    DECLSPEC void warning(const Args&... args) noexcept
-    {
-        __details::_Logger::call(__details::WARNING, __details::_Logger::warning_f, "WARNING", Options::C_YELLOW, args...);
-    }
+#   define MTL_LOG_METHOD(funcName, type, color, option) \
+        template<typename... Args>\
+        DECLSPEC void funcName(const Args&... args)\
+        {\
+            if (MTL_LOG_NAMESPACE::Options::isLogEnabled() && \
+                MTL_LOG_NAMESPACE::Options::is##option##Enabled())\
+            {\
+                MTL_LOG_NAMESPACE::__details::_Logger::_start_print(type,\
+                                                                    MTL_LOG_NAMESPACE::Options::color,\
+                                                                    args...);\
+            }\
+        }
+    MTL_LOG_METHOD(info,    "INFO   ", C_GREEN,  Info)
+    MTL_LOG_METHOD(warning, "WARNING", C_YELLOW, Warning)
+    MTL_LOG_METHOD(error,   "ERROR  ", C_RED,    Error)
+    MTL_LOG_METHOD(fatal,   "FATAL  ", C_RED,    Fatal)
+    MTL_LOG_METHOD(debug,   "DEBUG  ", C_BLUE,   Debug)
+#   undef MTL_LOG_METHOD
     
-    /**
-     * @brief Loads the configuration file named @b fname if it exists, otherwise it will create it and fill
-     * it with default values.
-     * @param[in] fname The name you want for this file.
-     */
-    inline void loadConfiguration(const std::string& fname)
+#   define DUMP_LINE(file, text) file << text << std::endl;
+#   define READ_BOOL(varname) \
+        config >> foo >> equal >> value;\
+        MTL_LOG_NAMESPACE::Options::enable##varname(value);
+    inline DECLSPEC void loadConfiguration(const std::string& fname)
     {
         std::ifstream config(fname);
         if (config.good())
         {
             std::string foo;
             char        equal;
-            config >> foo >> equal >> log::Options::ENABLE_LOG;
-            config >> foo >> equal >> log::Options::ENABLE_COLOR;
-            config >> foo >> equal >> log::Options::ENABLE_HORODATING;
-            config >> foo >> equal >> log::Options::ENABLE_SPACING;
-            config >> foo >> equal >> log::Options::ALPHA_BOOL;
+            bool        value;
+            READ_BOOL(Log);
+            READ_BOOL(Color);
+            READ_BOOL(Spacing);
+            READ_BOOL(AlphaBool);
+            READ_BOOL(Info);
+            READ_BOOL(Warning);
+            READ_BOOL(Error);
+            READ_BOOL(Fatal);
+            READ_BOOL(Debug);
             config >> foo >> equal;
-            std::getline(config, log::Options::FORMAT);
+            std::getline(config, foo);
+            MTL_LOG_NAMESPACE::Options::setFormat(foo);
             config.close();
         }
         else
@@ -492,22 +358,23 @@ namespace log
             std::ofstream dump(fname);
             if (dump.good())
             {
-                dump << "ENABLE_LOG:bool = 1" << std::endl;
-                dump << "ENABLE_COLOR:bool = 0" << std::endl;
-                dump << "ENABLE_HORODATING:bool = 0" << std::endl;
-                dump << "ENABLE_SPACING:bool = 1" << std::endl;
-                dump << "ALPHA_BOOL:bool = 1" << std::endl;
-                dump << "FORMAT:string =[{TYPE} {DATE}] :" << std::endl << std::endl;
-                dump << "# This will not be parsed." << std::endl;
-                dump << "# FORMAT value has to be like this :" << std::endl;
-                dump << "# \"FORMAT:string =\" is just the lvalue. Right after the sequence you wanna display starts." << std::endl;
-                dump << "# Inside the sequence, you could use {TYPE} to display the logging type." << std::endl;
-                dump << "#                                    {DATE} to display the horodating." << std::endl;
-                dump << "# Spaces count." << std::endl;
-                dump << "# IMPORTANT Do not change line order !" << std::endl;
+                DUMP_LINE(dump, "ENABLE_LOG:bool        = 1");
+                DUMP_LINE(dump, "ENABLE_COLOR:bool      = 0");
+                DUMP_LINE(dump, "ENABLE_SPACING:bool    = 1");
+                DUMP_LINE(dump, "ENABLE_ALPHA_BOOL:bool = 1");
+                DUMP_LINE(dump, "ENABLE_INFO:bool       = 1");
+                DUMP_LINE(dump, "ENABLE_WARNING:bool    = 1");
+                DUMP_LINE(dump, "ENABLE_ERROR:bool      = 1");
+                DUMP_LINE(dump, "ENABLE_FATAL:bool      = 1");
+                DUMP_LINE(dump, "ENABLE_DEBUG:bool      = 1");
+                DUMP_LINE(dump, "HEADER_FORMAT:string   =[{TYPE} {DATE}] : ");
                 dump.close();
             }
         }
     }
+#   undef DUMP_LINE
+#   undef READ_BOOL
+#   undef __DETAILS_FRIENDSHIPS
+#   undef MTL_LOG_FRIEND
 }
 #endif

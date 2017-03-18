@@ -1,0 +1,454 @@
+/**
+ * @file logs.hpp
+ * This was a challenge from a buddy, make a log program within a header only.
+ * In order to compile with this header, the only prerequisite is :
+ * @code
+ * -std=c++11
+ * @endcode
+ * Or any further version.@n
+ * In order to enable multithreading, you could include to your compile lines :
+ *     - -fopenmp (If you're using @b <omp.h>)
+ *     - -pthread (If you're using @b STL headers)
+ * 
+ * If you're curious (or mad) enough to look at the internal part, enable within your doxygen file :
+ * @code
+ * ENABLED_SECTIONS = UNHIDE_THIS_DOXYGEN
+ * @endcode
+ * @date 03/18/2017
+ * @author MTLCRBN
+ * @see https://github.com/Lbardoux/log
+ * @see Doxygen documentation for internal components details (you won't get any here).
+ * @version 2.0
+ * @copyright Copyright 2017 MTLCRBN
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+ *   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+ *   3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+// public part of the logs
+/**
+ * @def MTL_LOG_NAMESPACE
+ * Wraps the logs.hpp namespace name.
+ * Because name collisions are frequent, @b logs.hpp uses this trick.@n
+ * If you encounter a collision within your code/project, add to your compile lines :
+ * @code
+ * -DMTL_LOG_NAMESPACE=namespace_name_you_want
+ * @endcode
+ * But you'll have to ensure that you're using the @b namespace_name_you_want along you program.
+ * 
+ * It is also possible (but not recommended) to use this macro directly :
+ * @code
+ * MTL_LOG_NAMESPACE::info("This is not a good idea");
+ * 
+ * // We prefer the default value :
+ * mlog::info("It's better");
+ * // or the user defined namespace :
+ * namespace_name_you_want::info("not bad but this is a long name");
+ * @endcode
+ * 
+ * Default value = @b mlog
+ * 
+ * @def DECLSPEC
+ * Declare functions as exportable if it wasn't defined before (by iostream for example).
+ * 
+ * @fn void mlog::info(const Args&... args)
+ * Logs a message with the @b info type, which means a single information (advancement for example).
+ * @param[in] args A multiple number and type of arguments.
+ * @throw std::ios_base::failure If the current output stream isn't good.
+ * @throw std::ios_base::failure If the current output stream is NULL or nullptr.
+ * @throw ...                    If the object you wanna display throws exception.
+ * 
+ * @fn void mlog::warning(const Args&... args)
+ * Logs a message with the @b warning type, which means something between info and error.
+ * For example, you forgot to set a parameter, and you warn the user that you pick a default value.
+ * @param[in] args A multiple number and type of arguments.
+ * @throw std::ios_base::failure If the current output stream isn't good.
+ * @throw std::ios_base::failure If the current output stream is NULL or nullptr.
+ * @throw ...                    If the object you wanna display throws exception.
+ * 
+ * @fn void mlog::error(const Args&... args)
+ * Logs a message with the @b error type, which means a non fatal error.
+ * For example, this kind of message is for handled exceptions, wrong user inputs.
+ * @param[in] args A multiple number and type of arguments.
+ * @throw std::ios_base::failure If the current output stream isn't good.
+ * @throw std::ios_base::failure If the current output stream is NULL or nullptr.
+ * @throw ...                    If the object you wanna display throws exception.
+ * 
+ * @fn void mlog::fatal(const Args&... args)
+ * Logs a message with the @b fatal type, which means a fatal error which will abort the program.
+ * @param[in] args A multiple number and type of arguments.
+ * @throw std::ios_base::failure If the current output stream isn't good.
+ * @throw std::ios_base::failure If the current output stream is NULL or nullptr.
+ * @throw ...                    If the object you wanna display throws exception.
+ * 
+ * @fn void mlog::debug(const Args&... args)
+ * Logs a message with the @b debug type, which means message for developers.
+ * @param[in] args A multiple number and type of arguments.
+ * @throw std::ios_base::failure If the current output stream isn't good.
+ * @throw std::ios_base::failure If the current output stream is NULL or nullptr.
+ * @throw ...                    If the object you wanna display throws exception.
+ * 
+ * @fn void mlog::loadConfiguration(const std::string& fname)
+ * Loads @b fname configuration file and sets the internal options with it content.
+ * @param[in] fname A valid filename.
+ * @pre @b fname must not be the empty string @b "".
+ * @post If @b fname doesn't exist, it will generate a template configuration file with default values.
+ * @post Otherwise, it will read the file and sets up correctly the options.
+ */
+/**
+ * @class mlog::Options
+ * This class allows the user to manually, during runtime, set up the options value.
+ * The concept is quite simple, it works with @b getters and @b setters.
+ * @warning These setters/getters aren't @b REENTRANT, so carry on with multithreading.
+ * @if UNHIDE_THIS_DOXYGEN
+ * @implements mlog::__details::__Static_declarer<mlog::Options>
+ * @endif
+ * 
+ * @fn void mlog::Options::enableLog(bool value) noexcept
+ * If you want to switch on/off the logs.
+ * @param[in] value [true,false]
+ * By default, this is set to @b true
+ * @warning Non @b reentrant function.
+ * 
+ * @fn bool mlog::Options::isLogEnabled(void) noexcept
+ * If you want to know if the logs are enabled or not.
+ * @return [true,false]
+ * @warning Non @b reentrant function.
+ * 
+ * @fn void mlog::Options::enableColor(bool value) noexcept
+ * If you want to switch on/off the color for the log type (error, warning, etc).
+ * @param[in] value [true,false]
+ * By default, this is set to @b false
+ * @warning Non @b reentrant function.
+ * @warning Color is sets with ASCII codes, so check if your terminal accept them.
+ * @warning Not recommended for filelogs.
+ * 
+ * @fn bool mlog::Options::isColorEnabled(void) noexcept
+ * If you want to know if the color is enabled or not.
+ * @return [true,false]
+ * @warning Non @b reentrant function.
+ * 
+ * @fn void mlog::Options::enableSpacing(bool value) noexcept
+ * If you want to switch on/off the spacing between each log argument.
+ * @param[in] value [true,false]
+ * By default, this is set to @b true
+ * @warning Non @b reentrant function.
+ * 
+ * @fn bool mlog::Options::isSpacingEnabled(void) noexcept
+ * If you want to know if the spacing is enabled or not.
+ * @return [true,false]
+ * @warning Non @b reentrant function.
+ * 
+ * @fn void mlog::Options::enableAlphaBool(bool value) noexcept
+ * If you want to switch on/off the text display of boolean.
+ * @param[in] value [true,false]
+ * By default, this is set to @b true
+ * @warning Non @b reentrant function.
+ * 
+ * @fn bool mlog::Options::isAlphaBoolEnabled(void) noexcept
+ * If you want to know if the text boolean option is enabled or not.
+ * @return [true,false]
+ * @warning Non @b reentrant function.
+ * 
+ * @fn void mlog::Options::enableDebug(bool value) noexcept
+ * If you want to switch on/off the debug logs.
+ * @param[in] value [true,false]
+ * By default, this is set to @b true
+ * @warning Non @b reentrant function.
+ * 
+ * @fn bool mlog::Options::isDebugEnabled(void) noexcept
+ * If you want to know if the debug logs are enabled or not.
+ * @return [true,false]
+ * @warning Non @b reentrant function.
+ * 
+ * @fn void mlog::Options::enableWarning(bool value) noexcept
+ * If you want to switch on/off the warning logs.
+ * @param[in] value [true,false]
+ * By default, this is set to @b true
+ * @warning Non @b reentrant function.
+ * 
+ * @fn bool mlog::Options::isWarningEnabled(void) noexcept
+ * If you want to know if the warning logs are enabled or not.
+ * @return [true,false]
+ * @warning Non @b reentrant function.
+ * 
+ * @fn void mlog::Options::enableError(bool value) noexcept
+ * If you want to switch on/off the error logs.
+ * @param[in] value [true,false]
+ * By default, this is set to @b true
+ * @warning Non @b reentrant function.
+ * 
+ * @fn bool mlog::Options::isErrorEnabled(void) noexcept
+ * If you want to know if the error logs are enabled or not.
+ * @return [true,false]
+ * @warning Non @b reentrant function.
+ * 
+ * @fn void mlog::Options::enableFatal(bool value) noexcept
+ * If you want to switch on/off the fatal logs.
+ * @param[in] value [true,false]
+ * By default, this is set to @b true
+ * @warning Non @b reentrant function.
+ * 
+ * @fn bool mlog::Options::isFatalEnabled(void) noexcept
+ * If you want to know if the fatal logs are enabled or not.
+ * @return [true,false]
+ * @warning Non @b reentrant function.
+ * 
+ * @fn void mlog::Options::enableInfo(bool value) noexcept
+ * If you want to switch on/off the info logs.
+ * @param[in] value [true,false]
+ * By default, this is set to @b true
+ * @warning Non @b reentrant function.
+ * 
+ * @fn bool mlog::Options::isInfoEnabled(void) noexcept
+ * If you want to know if the info logs are enabled or not.
+ * @return [true,false]
+ * @warning Non @b reentrant function.
+ * 
+ * @fn mlog::Options::Options(void)
+ * Deleted because you don't have to instanciate any Options.
+ * 
+ * @fn void mlog::Options::setOutputStream(std::ostream* out)
+ * Changes the output stream to @b out.
+ * @param[in,out] out A valid address of std::ostream.
+ * @pre @b out must be and remain valid along the program lifetime.
+ * @pre @b must not be @b nullptr or @b NULL.
+ * 
+ * @fn void mlog::Options::setFormat(const std::string& format)
+ * Changes the header of the log lines with @b format.
+ * @param[in] format The text format you want for the header log lines.
+ * Within @b format, you could use :
+ *   - {TYPE}   To display here the type of the log.
+ *   - {DATE}   To display here the date of the log.
+ *   - {THREAD} To display here the emiter thread number (only if -pthread or -fopenmp).
+ */
+
+// Developpers part, enable HIDE_THIS_DOXYGEN to see it
+/**
+ * @if UNHIDE_THIS_DOXYGEN
+ * 
+ * @def MTL_LOG_DECLARE
+ * Wraps the log type method definition into a macro.
+ * To use it, simply put :
+ * @code
+ * MTL_LOG_DECLARE(my_log_type)
+ * // Declare a new function called my_log_type(...)
+ * @endcode
+ * 
+ * @def MTL_LOG_FRIEND
+ * Wraps a friendship declaration for log method type.
+ * To use it, simply put :
+ * @code
+ * MTL_LOG_FRIEND(my_log_type)
+ * @endcode
+ * @see MTL_LOG_DECLARE
+ * 
+ * @def __DETAILS_FRIENDSHIPS
+ * Embeds every possible log methods as a friendship container.
+ * For internal purpose, all log methods must be added here.
+ * @see MTL_LOG_FRIEND
+ * 
+ * @class mlog::__details::__Header
+ * This class has for purpose to wraps the header of each log line.
+ * It also has for mission to parse headers template to formate header output.
+ * 
+ * @fn mlog::__details::__Header::__Header(void)
+ * Deleted because you can't use a default constructed __Header.
+ * 
+ * @fn mlog::__details::__Header::__Header(const std::string& str)
+ * Builds up a valid header by parsing @b str.
+ * @param[in] str The string format to parse.
+ * Within @b str you could use :
+ *   - {TYPE}   To display here the type of the log.
+ *   - {DATE}   To display here the date of the log.
+ *   - {THREAD} To display here the emiter thread number (only if -pthread or -fopenmp).
+ * 
+ * @fn __Header& mlog::__details::__Header::operator=(const std::string& str)
+ * Builds up a valid header by parsing @b str.
+ * @param[in] str The string format to parse.
+ * Within @b str you could use :
+ *   - {TYPE}   To display here the type of the log.
+ *   - {DATE}   To display here the date of the log.
+ *   - {THREAD} To display here the emiter thread number (only if -pthread or -fopenmp).
+ * 
+ * @fn mlog::__details::__Header::~__Header(void)
+ * Defaulted, we let the STL and compiler do the job.
+ * 
+ * @fn void mlog::__details::__Header::display(std::ostream& out, const std::string& type, const char *const color, const char *const nocolor, bool colorEnabled)
+ * Read the internal format and display the header.
+ * @param[in,out] out          The output stream to display on.
+ * @param[in]     type         The type of log you're displaying.
+ * @param[in]     color        The color for the type.
+ * @param[in]     nocolor      To move back to the previous color after displaying the type.
+ * @param[in]     colorEnabled If the color is enable.
+ * 
+ * 
+ * @fn std::ostream& mlog::__details::__Header::printTwoDigits(std::ostream& out, int value)
+ * Prints a 0 before @b value if value is smaller than 10.
+ * @param[in,out] out   The output stream to display on.
+ * @param[in]     value The value you wanna display.
+ * @return @b out
+ * 
+ * @fn void mlog::__details::__Header::splitAndMerge(int begin, int end, int id)
+ * Split the current format to include a tag (TYPE, THREAD, etc) inside.
+ * For example, let's take this format : "[{TYPE}] :"
+ *                                        0123456789
+ * it will split this into : 
+ *    - Display from [0, 1[ from this format
+ *    - Display type
+ *    - Display from [7, end[ from this format
+ * 
+ * @param[in] begin The offset inside the format for the begin of this tag.
+ * @param[in] end   The offset inside the format for the end   of this tag (excluded).
+ * @param[in] id    The id of this tag.
+ * 
+ * @fn void mlog::__details::__Header::build(void)
+ * Looks and replace every tags inside the format (internaly stored).
+ * 
+ * @var mlog::__details::__Header::TAG_DATE_ID
+ * The id for the splitting for {DATE}.
+ * 
+ * @var mlog::__details::__Header::TAG_TYPE_ID
+ * The id for the splitting for {TYPE}.
+ * 
+ * @var mlog::__details::__Header::TAG_THREAD_ID
+ * The id for the splitting for {THREAD}.
+ * 
+ * @var mlog::__details::__Header::TAG_TYPE
+ * The text tag {TYPE} for the format string.
+ * 
+ * @var mlog::__details::__Header::TAG_THREAD
+ * The text tag {THREAD} for the format string.
+ * 
+ * @var mlog::__details::__Header::TAG_DATE
+ * The text tag {DATE} for the format string.
+ * 
+ * @var mlog::__details::__Header::pattern
+ * The input format (unmodified, tags are still in).
+ * 
+ * @var mlog::__details::__Header::chunks
+ * The steps instructions to display the header.
+ * 
+ * @def SPLIT_AND_MERGE
+ * It was tedious to repeat code chunks, so it does it for me.
+ * It wraps a call to this->splitAndMerge
+ * 
+ * @class mlog::__details::__Static_declarer
+ * Embeds static members for mlog::Options, it gets them by inheritance.
+ * 
+ * @var mlog::__details::__Static_declarer::ENABLE_LOG
+ * Is logging enabled or not (@b true by default) ?
+ * 
+ * @var mlog::__details::__Static_declarer::ENABLE_COLOR
+ * Is colors enabled or not for types (@b false by default) ?
+ * 
+ * @var mlog::__details::__Static_declarer::ENABLE_SPACING
+ * Is spacing between each arguments enabled (@b true by default) ?
+ * 
+ * @var mlog::__details::__Static_declarer::ENABLE_DEBUG
+ * Is debug log type enabled (@b true by default) ?
+ * 
+ * @var mlog::__details::__Static_declarer::ENABLE_INFO
+ * Is info log type enabled (@b true by default) ?
+ * 
+ * @var mlog::__details::__Static_declarer::ENABLE_ERROR
+ * Is error log type enabled (@b true by default) ?
+ * 
+ * @var mlog::__details::__Static_declarer::ENABLE_WARNING
+ * Is warning log type enabled (@b true by default) ?
+ * 
+ * @var mlog::__details::__Static_declarer::ENABLE_FATAL
+ * Is fatal log type enabled (@b true by default) ?
+ * 
+ * @var mlog::__details::__Static_declarer::OUT
+ * The output stream for displaying logs (@b &std::cout by default).
+ * 
+ * @var mlog::__details::__Static_declarer::ENABLE_ALPHA_BOOL
+ * Is ASCII boolean display enabled (@b true by default) ?
+ * 
+ * @var mlog::__details::__Static_declarer::FORMAT
+ * The header format (<b>"[{TYPE} {DATE}] : "</b> by default).
+ * 
+ * @var mlog::__details::__Static_declarer::MUTEX
+ * A mutex to guaranty mutual exclusion for logging.
+ * Only if multithreading explicitly enabled (-pthread or -fopenmp).
+ * 
+ * @var mlog::__details::__Static_declarer::C_YELLOW
+ * The yellow color for your xterm.
+ * 
+ * @var mlog::__details::__Static_declarer::C_RED
+ * The red color for your xterm.
+ * 
+ * @var mlog::__details::__Static_declarer::C_GREEN
+ * The green color for your xterm.
+ * 
+ * @var mlog::__details::__Static_declarer::C_BLUE
+ * The blue color for your xterm.
+ * 
+ * @var mlog::__details::__Static_declarer::C_BLANK
+ * No color code for your xterm.
+ * 
+ * @fn mlog::__details::__Static_declarer::__Static_declarer(void)
+ * Because instanciate this class is senseless.
+ * 
+ * @def STATIC_DECLARATION
+ * Because it was tedious to implement manualy static members.
+ * It requires a default value !
+ * 
+ * @def MTL_LOG_GET_SET
+ * Creates getter and setter following this template (let's take Lol for example) :
+ * @code
+ * static inline void enableLol(bool value) noexcept
+ * static inline bool isLolEnabled(void)    noexcept
+ * @endcode
+ * 
+ * @class mlog::__details::_Logger
+ * Every actions about logging are implemented here to avoid code duplication.
+ * 
+ * @fn mlog::__details::_Logger::_Logger(void)
+ * Deleted because it is senseless to instanciate an objet _Logger.
+ * 
+ * @fn void mlog::__details::_Logger::_print_(void)
+ * Terminal case of the template recursion, it displays the final @b endl.
+ * 
+ * @fn void mlog::__details::_Logger::_print_(const Actual& a, const Args&... args)
+ * Recursive case, print @b a and call _print_ over the other arguments.
+ * It will add a space if setted with the Options.
+ * @param[in] a    The argument to display.
+ * @param[in] args The other arguments left.
+ * @pre @b a must defines @b operator<< with a @b std::ostream
+ * 
+ * @fn void mlog::__details::_Logger::assertValidity(void)
+ * Checks for the validity of the current output stream.
+ * @throw std::ios_base::failure If the stream isn't good or is nullptr.
+ * 
+ * @fn void mlog::__details::_Logger::_start_print(const char *const tag, const char *const color, const Args&... args)
+ * The beginning of recursion, display the header and start _print_ recursion.
+ * This function guaranty mutual exclusion with multithreading.
+ * @param[in] tag   The type of the log line.
+ * @param[in] color The color you want for this type.
+ * @param[in] args  The other arguments left.
+ * @throw std::ios_base::failure If the stream isn't good or is nullptr.
+ * 
+ * @def MTL_LOG_METHOD
+ * Implements the log type method.
+ * It will also turn off this function if the enableTYPE is false or enableLog is false.
+ * 
+ * @def DUMP_LINE
+ * More easy to concentrate code duplication inside a macro.
+ * 
+ * @def READ_BOOL
+ * Read a boolean value and set Options as well.
+ * 
+ * @endif
+ */

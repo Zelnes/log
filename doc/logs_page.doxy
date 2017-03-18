@@ -1,0 +1,296 @@
+/**
+ * @if LOGS_MAIN_PAGE
+ * @mainpage
+ * @else
+ * @page id_page Logs 2.0
+ * @endif
+ * 
+ * @section     id_intro    I. Synopsis
+ * @subsection sid_intro_I  I.1. Logs ?
+ * Logs, nothing related to lumberjacks, it's all about keeping traces of your program execution.
+ * You could easily do it with some printf() or some std::cout, but it is a bit tedious to remove from
+ * your code at the end. Beside, there isn't any common format if you mess around with syntax.@n
+ * This is why I come up with Logs 2.0
+ * @subsection sid_intro_II I.2. Logs 2.0
+ * Basicaly, this library is a header-only, that means you don't have to compile it and link it.
+ * Just include it to your program, and there you go.@n
+ * <b>Keep in mind, that you'll have to rebuild every compilation unit which use this library if you perform
+ * modifications on it.</b> So add some dependencies to this header for every code unit which use it.@n
+ * Also, Logs 2.0 offers a highly configurable output.@n
+ * 
+ * <a href="https://github.com/Lbardoux/log">github repository</a>
+ * 
+ * @section     id_compile     II. Compile it
+ * @subsection sid_compile_I   II.1 Basic compilation
+ * First of all, in order to use this little library, you need a <b>C++ compiler</b> because
+ * it won't work with plain old C.@n
+ * Then, because of it internal construction, it requires a minimal version of the C++ standard,
+ * C++11 (but any further version remain valid, such as C++14).@n
+ * So you just need to provide to your compiler :
+ * @code
+ * -std=c++(11|14|17)
+ * @endcode
+ * @subsection sid_compile_II  II.2 Multithreading compilation
+ * If you plan to use multiple threads, you'll have to compile your code with, at least :
+ *    - @b -pthread If you're using STL thread headers.
+ *    - @b -fopenmp If you're using openMP.
+ * 
+ * Turning on one of these flags while compiling will activate the {THREAD} feature for your logs (see below) and
+ * enable the mutual exclusion while logging (a thread will display the entire line before letting another one
+ * doing the same).
+ * 
+ * Do it before doing anything, to prevent entire recompilation.
+ * @subsection sid_compile_III II.3 Namespace
+ * Finaly, every public functionalities belong to a specific namespace. By default, this namespace is @b mlog
+ * , but we're all aware about name collisions, so if @b mlog collide with any symbol of your program, you could change it.@n
+ * To do so, I implement the library by using a macro namespace, @b MTL_LOG_NAMESPACE.@n
+ * So, you just have to change it by providing to your compiler :
+ * @code
+ * -DMTL_LOG_NAMESPACE=m2log
+ * @endcode
+ * Again, do it before using massively my library.
+ * 
+ * 
+ * @section  id_usage  III. Use it
+ * This is simple, there isn't too many functions (just 5 at the moment) :
+ *   - mlog::debug()
+ *   - mlog::info()
+ *   - mlog::warning()
+ *   - mlog::error()
+ *   - mlog::fatal()
+ * 
+ * There purpose are just semantic.@n
+ * Ok, let's call them :
+ * @code
+ * mlog::debug();
+ * mlog::info();
+ * mlog::warning();
+ * mlog::error();
+ * mlog::fatal();
+ * @endcode
+ * And checkout what's coming out :
+ * @code
+ * [DEBUG   03/18/2017 18:56:53 ] : 
+ * [INFO    03/18/2017 18:56:53 ] : 
+ * [WARNING 03/18/2017 18:56:53 ] : 
+ * [ERROR   03/18/2017 18:56:53 ] : 
+ * [FATAL   03/18/2017 18:56:53 ] : 
+ * @endcode
+ * Fine, but so far, we don't provide any additionnal information, so it just displays the @b header.
+ * Talking about header, a log line is compound of two part :
+ * @code
+ * [DEBUG   03/18/2017 18:56:53 ] : "oh a beautiful debug message"
+ * <---------Header----------------><-----------Message---------->
+ * @endcode
+ * To fill the @b Message part, just add some arguments to your call statement, coma separated, as below :
+ * @code
+ * mlog::info("Hello", "World");
+ * @endcode
+ * Which result to :
+ * @code
+ * [INFO    03/18/2017 18:56:53 ] : Hello World
+ * @endcode
+ * And that's all folks.
+ * 
+ * @section     id_set     IV.   Configure it
+ * As I said, this library is highly configurable (we already see the compilation configuration with
+ * namespace and multithreading).@n
+ * Now we'll talk about some more common configuration about logging.
+ * @subsection sid_set_I   IV.1. In line configuration
+ * The first part talks about configuration within your code, you could perform them durint the execution.@n
+ * To do so, we will use the @b mlog::Options class. This is a non instanciable class, and to access data, we just
+ * have to request the :: operator.@n
+ * For example, if we want to change @b something, we do :
+ * @code
+ * mlog::Options::changeSomething(...);
+ * @endcode
+ * Here is an overview of available methods for mlog::Options.
+ * <table>
+ *  <tr>
+ *      <td><b>setter</b></td><td><b>getter</b></td><td><b>Description</b></td><td><b>Default value</b></td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::enableLog()</td>
+ *      <td>mlog::Options::isLogEnabled()</td>
+ *      <td>Switch on/off the entire log process.</td>
+ *      <td>true</td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::enableColor()</td>
+ *      <td>mlog::Options::isColorEnabled()</td>
+ *      <td>
+ *          Switch on/off the colorized log type.
+ *          <table>
+ *              <tr><td><b>Type</b></td><td><b>Color</b></td></tr>
+ *              <tr><td>DEBUG</td>      <td><b style="color: blue;">blue</b></td></tr>
+ *              <tr><td>INFO</td>       <td><b style="color: green;">green</b></td></tr>
+ *              <tr><td>WARNING</td>    <td><b style="color: yellow;">yellow</b></td></tr>
+ *              <tr><td>ERROR</td>      <td><b style="color: red;">red</b></td></tr>
+ *              <tr><td>FATAL</td>      <td><b style="color: red;">red</b></td></tr>
+ *          </table>
+ *          Carry on with logs files or term without colors.
+ *      </td>
+ *      <td>false</td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::enableSpacing()</td>
+ *      <td>mlog::Options::isSpacingEnabled()</td>
+ *      <td>Switch on/off the automatic space between each argument.</td>
+ *      <td>true</td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::enableAlphaBool()</td>
+ *      <td>mlog::Options::isAlphaBoolEnabled()</td>
+ *      <td>Switch on/off the boolean text display<br />(true instead of 1, false instead of 0).</td>
+ *      <td>true</td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::enableDebug()</td>
+ *      <td>mlog::Options::isDebugEnabled()</td>
+ *      <td>Switch on/off the @b debug log lines.</td>
+ *      <td>true</td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::enableWarning()</td>
+ *      <td>mlog::Options::isWarningEnabled()</td>
+ *      <td>Switch on/off the @b warning log lines.</td>
+ *      <td>true</td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::enableError()</td>
+ *      <td>mlog::Options::isErrorEnabled()</td>
+ *      <td>Switch on/off the @b error log lines.</td>
+ *      <td>true</td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::enableFatal()</td>
+ *      <td>mlog::Options::isFatalEnabled()</td>
+ *      <td>Switch on/off the @b fatal log lines.</td>
+ *      <td>true</td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::enableInfo()</td>
+ *      <td>mlog::Options::isInfoEnabled()</td>
+ *      <td>Switch on/off the @b info log lines.</td>
+ *      <td>true</td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::setOutputStream()</td>
+ *      <td>None</td>
+ *      <td>Change the output stream for displaying logs</td>
+ *      <td>&std::cout</td>
+ *  </tr>
+ *  <tr>
+ *      <td>mlog::Options::setFormat()</td>
+ *      <td>None</td>
+ *      <td>
+ *          Change the header format.<br />Each characters count, space included<br />It uses special tags :
+ *          <table>
+ *              <tr><td><b>Tag</b></td><td><b>Description</b></td></tr>
+ *              <tr><td>{TYPE}</td>  <td>Show log type here</td></tr>
+ *              <tr><td>{DATE}</td>  <td>Show the date MM/DD/YYYY HH:MM:SS</td></tr>
+ *              <tr><td>{THREAD}</td><td>If multithreading enabled only.<br />the hexadecimal thread number which call the log</td></tr>
+ *          </table>
+ *      </td>
+ *      <td>[{TYPE} {DATE}] : </td>
+ *  </tr>
+ * </table>
+ * Refers to documentation of mlog::Options for further informations.
+ * 
+ * <b>Warning</b>
+ * This is the only way to change the output stream, because you'll have to deal with open/close by yourself,
+ * by using the <b>dispose pattern</b> for example.@n
+ * But it takes every address of any std::ostream :
+ * @code
+ * std::ostream*
+ * std::ostringstream*
+ * std::stringstream*
+ * std::ofstream*
+ * std::fstream*
+ * // inherited from std::ostream works also.
+ * @endcode
+ * Just carry on with destructors !
+ * @subsection sid_set_II  IV.2. Out of source configuration
+ * But actually, if you manage to change a parameter within the code, you're force to carry on
+ * with calls order, rebuild, and mess around.@n
+ * This is why I create a possibility to load a configuration file.@n
+ * You do so by calling :
+ * @code
+ * mlog::loadConfiguration("mylog.conf");
+ * @endcode
+ * There is 2 possibilities :
+ *    - mylog.conf doesn't exist, so the function creates it and fills it with default values.
+ *    - It does exist, so the function loads it and sets the options.
+ * 
+ * This file looks like this :
+ * @code
+ * ENABLE_LOG:bool        = 1
+ * ENABLE_COLOR:bool      = 0
+ * ENABLE_SPACING:bool    = 1
+ * ENABLE_ALPHA_BOOL:bool = 1
+ * ENABLE_INFO:bool       = 1
+ * ENABLE_WARNING:bool    = 1
+ * ENABLE_ERROR:bool      = 1
+ * ENABLE_FATAL:bool      = 1
+ * ENABLE_DEBUG:bool      = 1
+ * HEADER_FORMAT:string   =[{TYPE} {DATE}] : 
+ * @endcode
+ * <b>Because of a poor man parsing function, never change the line order !</b>@n
+ * Everything is self explonatory :
+ *   - @b :bool waits for @b 1 or @b 0
+ *   - @b :string for ... a string.
+ * 
+ * The rules are the same than the in line configuration (see above).
+ * 
+ * So you're able to switch on/off everything without rebuild anything (great isn't it ?).
+ * @subsection sid_set_III IV.3. Summary
+ * This table matches the in line and out line configuration :
+ * <table>
+ *  <tr><td><b>In line</b></td><td><b>Out line</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableLog()</b></td>      <td><b>ENABLE_LOG:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableColor()</b></td>    <td><b>ENABLE_COLOR:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableSpacing()</b></td>  <td><b>ENABLE_SPACING:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableAlphaBool()</b></td><td><b>ENABLE_ALPHA_BOOL:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableInfo()</b></td>     <td><b>ENABLE_INFO:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableWarning()</b></td>  <td><b>ENABLE_WARNING:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableError()</b></td>    <td><b>ENABLE_ERROR:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableFatal()</b></td>    <td><b>ENABLE_FATAL:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableDebug()</b></td>    <td><b>ENABLE_DEBUG:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::setFormat()</b></td>      <td><b>HEADER_FORMAT:string</b></td></tr>
+ * </table>
+ * 
+ * @section id_doc      V. Documentation
+ * The documentation is build with Doxygen.@n
+ * If you are a developer (or a mad person, it's up to you), you could enable the developer documentation by
+ * adding to the doxyfile :
+ * @code
+ * ENABLED_SECTIONS += UNHIDE_THIS_DOXYGEN
+ * @endcode
+ * 
+ * You could also build this documentation as a main page (not a related page) by adding :
+ * @code
+ * ENABLED_SECTIONS += LOGS_MAIN_PAGE
+ * @endcode
+ * 
+ * @section id_license  VI. License
+ * @subsection sid_licence VI.1. BSD
+ * Copyright 2017 MTLCRBN@n
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+ *   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+ *   3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * @section id_author Author & contributor(s)
+ * <b>MTLCRBN</b>@n
+ * <b>Zelnes</b>, for the english checks of this documentation (thanks buddy), and for some ideas.@n
+ * <a href="http://www.iconninja.com/tag/log-out-icon">IconNinja</a>, for this beautiful logo :D.
+ * 
+ */
