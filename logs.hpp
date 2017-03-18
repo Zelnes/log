@@ -209,7 +209,7 @@ namespace MTL_LOG_NAMESPACE
 #       ifdef _REENTRANT
         template<typename T> std::mutex __Static_declarer<T>::MUTEX;
 #       endif
-        STATIC_DECLARATION(MTL_LOG_NAMESPACE::__details::__Header, FORMAT, std::string("[{TYPE} {DATE} {THREAD}] :"))
+        STATIC_DECLARATION(MTL_LOG_NAMESPACE::__details::__Header, FORMAT, std::string("[{TYPE} {DATE}] :"))
 #       undef STATIC_DECLARATION
     }
     
