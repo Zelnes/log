@@ -1,8 +1,8 @@
 # log
-<p aligne="left">
+<p aligne="center">
 	<img src="doc/log-icon.png" />
 </p>
-
+<p>
 [INFO    03/18/2017 21:13:02] : It's always fun to logs things
 [INFO    03/18/2017 21:13:02] : Dumped to a file, or even on the screen with a xterm
 [WARNING 03/18/2017 21:13:02] : It is even better if you could easily configure it
@@ -13,3 +13,4 @@
 [WARNING 03/18/2017 21:13:02] : doxygen doc/Doxyfile
 [DEBUG   03/18/2017 21:13:02] : And yes, I generate this text with Logs 2.0 :D
 [FATAL   03/18/2017 21:13:02] : End Of Transmission
+</p>
