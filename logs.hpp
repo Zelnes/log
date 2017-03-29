@@ -37,6 +37,7 @@
 #   endif
 #endif
 
+#define MTL_LOG_VARIABLE(varname) #varname " =", varname
 
 namespace MTL_LOG_NAMESPACE
 {

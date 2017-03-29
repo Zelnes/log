@@ -113,6 +113,14 @@
  * @post If @b fname doesn't exist, it will generate a template configuration file with default values.
  * @post Otherwise, it will read the file and sets up correctly the options.
  * 
+ * @def MTL_LOG_VARIABLE
+ * It will dump the content of the given variable @b name, in order to use it on a log
+ * method.
+ * @code
+ * int myvar = 18;
+ * mlog::info(MTL_LOG_VARIABLE(myvar)); // Will show "myvar : 18"
+ * @endcode
+ * 
  */
 /**
  * @class mlog::Options

@@ -93,7 +93,21 @@
  * @code
  * [INFO    03/18/2017 18:56:53 ] : Hello World
  * @endcode
- * And that's all folks.
+ * And that's all folks.@n@n
+ * 
+ * In addition, dump variable is a bit tedious, so I create a macro which does it for you.@n
+ * This is MTL_LOG_VARIABLE, and it works like this :
+ * @code
+ * int my_atrocious_variable_name = 15;
+ * mlog::info(MTL_LOG_VARIABLE(my_atrocious_variable_name));
+ * @endcode
+ * It will display for you, assuming a short header :
+ * @code
+ * // With spacing enabled
+ * [INFO  ] my_atrocious_variable_name = 15
+ * // Otherwise
+ * [INFO  ] my_atrocious_variable_name =15
+ * @endcode
  * 
  * @section     id_set     IV.   Configure it
  * As I said, this library is highly configurable (we already see the compilation configuration with
