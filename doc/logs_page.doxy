@@ -113,8 +113,8 @@
  * As I said, this library is highly configurable (we already see the compilation configuration with
  * namespace and multithreading).@n
  * Now we'll talk about some more common configuration about logging.
- * @subsection sid_set_I   IV.1. In line configuration
- * The first part talks about configuration within your code, you could perform them durint the execution.@n
+ * @subsection sid_set_I   IV.1. On the fly configuration
+ * The first part talks about configuration within your code, you could perform them during the execution.@n
  * To do so, we will use the @b mlog::Options class. This is a non instanciable class, and to access data, we just
  * have to request the :: operator.@n
  * For example, if we want to change @b something, we do :
@@ -226,7 +226,7 @@
  *  </tr>
  * </table>
  * Refers to documentation of mlog::Options for further informations.@n
- * These functions aren't REENTRANT at all, but they're protected by the same mutex than the logs methods.
+ * These functions aren't REENTRANT at all, but they're protected by the same mutex than the log methods.
  * 
  * <b>Warning</b>
  * This is the only way to change the output stream, because you'll have to deal with open/close by yourself,
@@ -250,8 +250,8 @@
  * mlog::loadConfiguration("mylog.conf");
  * @endcode
  * There is 2 possibilities :
- *    - mylog.conf doesn't exist, so the function creates it and fills it with default values.
- *    - It does exist, so the function loads it and sets the options.
+ *    - mylog.conf doesn't exist, so the function creates it and fills it with default values (it also returns false).
+ *    - It does exist, so the function loads it and sets the options (it also return true).
  * 
  * This file looks like this :
  * @code
