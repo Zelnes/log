@@ -47,6 +47,7 @@ namespace MTL_LOG_NAMESPACE
     MTL_LOG_DECLARE(error)
     MTL_LOG_DECLARE(fatal)
     MTL_LOG_DECLARE(debug)
+    MTL_LOG_DECLARE(trace)
     inline DECLSPEC bool loadConfiguration(const std::string& fname);
 #   undef MTL_LOG_DECLARE
     
@@ -60,7 +61,8 @@ namespace MTL_LOG_NAMESPACE
             MTL_LOG_FRIEND(warning) \
             MTL_LOG_FRIEND(error) \
             MTL_LOG_FRIEND(fatal) \
-            MTL_LOG_FRIEND(debug)
+            MTL_LOG_FRIEND(debug) \
+            MTL_LOG_FRIEND(trace)
         
         class __Header final
         {
@@ -182,6 +184,7 @@ namespace MTL_LOG_NAMESPACE
                 static bool                                   ENABLE_ERROR;
                 static bool                                   ENABLE_WARNING;
                 static bool                                   ENABLE_FATAL;
+                static bool                                   ENABLE_TRACE;
                 static bool                                   ENABLE_HEADER;
                 static std::ostream*                          OUT;
                 static bool                                   ENABLE_ALPHA_BOOL;
@@ -210,6 +213,7 @@ namespace MTL_LOG_NAMESPACE
         STATIC_DECLARATION(bool,          ENABLE_ERROR,      true)
         STATIC_DECLARATION(bool,          ENABLE_WARNING,    true)
         STATIC_DECLARATION(bool,          ENABLE_FATAL,      true)
+        STATIC_DECLARATION(bool,          ENABLE_TRACE,      true)
         STATIC_DECLARATION(bool,          ENABLE_HEADER,     true)
         STATIC_DECLARATION(std::ostream*, OUT,               &std::cout)
         STATIC_DECLARATION(bool,          ENABLE_ALPHA_BOOL, true)
@@ -251,6 +255,7 @@ namespace MTL_LOG_NAMESPACE
             MTL_LOG_GET_SET(bool, Fatal,     ENABLE_FATAL)
             MTL_LOG_GET_SET(bool, Info,      ENABLE_INFO)
             MTL_LOG_GET_SET(bool, Header,    ENABLE_HEADER)
+            MTL_LOG_GET_SET(bool, Trace,     ENABLE_TRACE)
             static void setOutputStream(std::ostream* out)
             {
                 MTL_LOG_LOCK;
@@ -271,7 +276,6 @@ namespace MTL_LOG_NAMESPACE
                 MTL_LOG_LOCK;
                 return MTL_LOG_NAMESPACE::Options::FORMAT;
             }
-        
     };
     
 #   undef MTL_LOG_GET_SET
@@ -348,6 +352,7 @@ namespace MTL_LOG_NAMESPACE
     MTL_LOG_METHOD(error,   "ERROR  ", C_RED,    Error)
     MTL_LOG_METHOD(fatal,   "FATAL  ", C_RED,    Fatal)
     MTL_LOG_METHOD(debug,   "DEBUG  ", C_BLUE,   Debug)
+    MTL_LOG_METHOD(trace,   "TRACE  ", C_BLUE,   Trace)
 #   undef MTL_LOG_METHOD
 #   undef MTL_LOG_LOCK
     
@@ -372,6 +377,7 @@ namespace MTL_LOG_NAMESPACE
             MTL_LOG_READ_BOOL(Error);
             MTL_LOG_READ_BOOL(Fatal);
             MTL_LOG_READ_BOOL(Debug);
+            MTL_LOG_READ_BOOL(Trace);
             MTL_LOG_READ_BOOL(Header);
             config >> foo >> equal;
             std::getline(config, foo);
@@ -393,6 +399,7 @@ namespace MTL_LOG_NAMESPACE
                 MTL_LOG_DUMP_LINE(dump, "ENABLE_ERROR:bool      = 1");
                 MTL_LOG_DUMP_LINE(dump, "ENABLE_FATAL:bool      = 1");
                 MTL_LOG_DUMP_LINE(dump, "ENABLE_DEBUG:bool      = 1");
+                MTL_LOG_DUMP_LINE(dump, "ENABLE_TRACE:bool      = 1");
                 MTL_LOG_DUMP_LINE(dump, "ENABLE_HEADER:bool     = 1");
                 MTL_LOG_DUMP_LINE(dump, "HEADER_FORMAT:string   =[{TYPE} {DATE}] : ");
                 dump.close();

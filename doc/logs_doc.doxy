@@ -91,6 +91,13 @@
  * @throw std::ios_base::failure If the current output stream is NULL or nullptr.
  * @throw ...                    If the object you wanna display throws exception.
  * 
+ * @fn void mlog::trace(const Args&... args)
+ * Logs a message with the @b trace type, which means a higher level of debug.
+ * @param[in] args A multiple number and type of arguments.
+ * @throw std::ios_base::failure If the current output stream isn't good.
+ * @throw std::ios_base::failure If the current output stream is NULL or nullptr.
+ * @throw ...                    If the object you wanna display throws exception.
+ * 
  * @fn void mlog::debug(const Args&... args)
  * Logs a message with the @b debug type, which means message for developers.
  * @param[in] args A multiple number and type of arguments.

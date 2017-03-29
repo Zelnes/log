@@ -54,6 +54,7 @@
  * @section  id_usage  III. Use it
  * This is simple, there isn't too many functions (just 5 at the moment) :
  *   - @b mlog::debug() For developers only.
+ *   - @b mlog::trace() For developers only, at a higher level than debug.
  *   - @b mlog::info() To display advancement for example.
  *   - @b mlog::warning() To warn about something, like a deprecated functionality for example.
  *   - @b mlog::error() To display a backupable error, which usualy don't abor tthe program.
@@ -63,6 +64,7 @@
  * Ok, let's call them :
  * @code
  * mlog::debug();
+ * mlog::trace();
  * mlog::info();
  * mlog::warning();
  * mlog::error();
@@ -71,6 +73,7 @@
  * And checkout what's coming out :
  * @code
  * [DEBUG   03/18/2017 18:56:53] : 
+ * [TRACE   03/18/2017 18:56:53] : 
  * [INFO    03/18/2017 18:56:53] : 
  * [WARNING 03/18/2017 18:56:53] : 
  * [ERROR   03/18/2017 18:56:53] : 
@@ -79,8 +82,8 @@
  * Fine, but so far, we don't provide any additionnal information, so it just displays the @b header.
  * Talking about header, a log line is compound of two part :
  * @code
- * [DEBUG   03/18/2017 18:56:53 ] : "oh a beautiful debug message"
- * <---------Header----------------><-----------Message---------->
+ * [DEBUG   03/18/2017 18:56:53] : "oh a beautiful debug message"
+ * <---------Header---------------><-----------Message---------->
  * @endcode
  * To fill the @b Message part, just add some arguments to your call statement, coma separated, as below :
  * @code
@@ -175,6 +178,12 @@
  *      <td>true</td>
  *  </tr>
  *  <tr>
+ *      <td>mlog::Options::enableTrace()</td>
+ *      <td>mlog::Options::isTraceEnabled()</td>
+ *      <td>Switch on/off the @b trace log lines.</td>
+ *      <td>true</td>
+ *  </tr>
+ *  <tr>
  *      <td>mlog::Options::enableHeader()</td>
  *      <td>mlog::Options::isHeaderEnabled()</td>
  *      <td>Switch on/off the @b header on the future log lines.</td>
@@ -241,6 +250,7 @@
  * ENABLE_ERROR:bool      = 1
  * ENABLE_FATAL:bool      = 1
  * ENABLE_DEBUG:bool      = 1
+ * ENABLE_TRACE:bool      = 1
  * ENABLE_HEADER:bool     = 1
  * HEADER_FORMAT:string   =[{TYPE} {DATE} {TIME}] : 
  * @endcode
@@ -265,6 +275,7 @@
  *  <tr><td><b>mlog::Options::enableError()</b></td>    <td><b>ENABLE_ERROR:bool</b></td></tr>
  *  <tr><td><b>mlog::Options::enableFatal()</b></td>    <td><b>ENABLE_FATAL:bool</b></td></tr>
  *  <tr><td><b>mlog::Options::enableDebug()</b></td>    <td><b>ENABLE_DEBUG:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableTrace()</b></td>    <td><b>ENABLE_TRACE:bool</b></td></tr>
  *  <tr><td><b>mlog::Options::enableHeader()</b></td>   <td><b>ENABLE_HEADER:string</b></td></tr>
  *  <tr><td><b>mlog::Options::setFormat()</b></td>      <td><b>HEADER_FORMAT:string</b></td></tr>
  * </table>
