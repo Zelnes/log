@@ -202,7 +202,8 @@
  *      <td>[{TYPE} {DATE} {TIME}] : </td>
  *  </tr>
  * </table>
- * Refers to documentation of mlog::Options for further informations.
+ * Refers to documentation of mlog::Options for further informations.@n
+ * These functions aren't REENTRANT at all, but they're protected by the same mutex than the logs methods.
  * 
  * <b>Warning</b>
  * This is the only way to change the output stream, because you'll have to deal with open/close by yourself,
