@@ -98,12 +98,14 @@
  * @throw std::ios_base::failure If the current output stream is NULL or nullptr.
  * @throw ...                    If the object you wanna display throws exception.
  * 
- * @fn void mlog::loadConfiguration(const std::string& fname)
+ * @fn bool mlog::loadConfiguration(const std::string& fname)
  * Loads @b fname configuration file and sets the internal options with it content.
  * @param[in] fname A valid filename.
+ * @return @b true if the file was loaded, false if the file was created.
  * @pre @b fname must not be the empty string @b "".
  * @post If @b fname doesn't exist, it will generate a template configuration file with default values.
  * @post Otherwise, it will read the file and sets up correctly the options.
+ * 
  */
 /**
  * @class mlog::Options
@@ -215,6 +217,17 @@
  * @return [true,false]
  * @warning Non @b reentrant function.
  * 
+ * @fn void mlog::Options::enableHeader(bool value) noexcept
+ * If you want to switch on/off the header display on your logs.
+ * @param[in] value [true,false]
+ * By default, this is set to @b true
+ * @warning Non @b reentrant function.
+ * 
+ * @fn bool mlog::Options::isHeaderEnabled(void) noexcept
+ * If you want to know if the header display is enabled or not.
+ * @return [true,false]
+ * @warning Non @b reentrant function.
+ * 
  * @fn mlog::Options::Options(void)
  * Deleted because you don't have to instanciate any Options.
  * 
@@ -223,6 +236,17 @@
  * @param[in,out] out A valid address of std::ostream.
  * @pre @b out must be and remain valid along the program lifetime.
  * @pre @b must not be @b nullptr or @b NULL.
+ * @warning Non @b reentrant function.
+ * 
+ * @fn std::ostream* mlog::Options::getOutputStream(void)
+ * Grants access to the current address of the output stream.
+ * @return The address of this ostream.
+ * @warning Non @b reentrant function.
+ * 
+ * @fn std::string mlog::Options::getFormat(void)
+ * Grants access to the unparsed format of the header.
+ * @return The header format by copy within a string.
+ * @warning Non @b reentrant function.
  * 
  * @fn void mlog::Options::setFormat(const std::string& format)
  * Changes the header of the log lines with @b format.
@@ -236,6 +260,12 @@
 // Developpers part, enable HIDE_THIS_DOXYGEN to see it
 /**
  * @if UNHIDE_THIS_DOXYGEN
+ * 
+ * @def MTL_LOG_WITH_THREADS
+ * To know if the multithread part is enabled or not.
+ * 
+ * @def MTL_LOG_LOCK
+ * To lock every action with threads enabled.
  * 
  * @def MTL_LOG_DECLARE
  * Wraps the log type method definition into a macro.
@@ -315,33 +345,20 @@
  * @fn void mlog::__details::__Header::build(void)
  * Looks and replace every tags inside the format (internaly stored).
  * 
- * @var mlog::__details::__Header::TAG_DATE_ID
- * The id for the splitting for {DATE}.
+ * @fn void mlog::__details::__Header::checkAndMergeIfFound(const std::string& tag, int id)
+ * Checks if @b tag does exist into the format line, and call for splitAndMerge statement
+ * with @b id as beacon, otherwise it does nothing.
+ * @param[in] tag The specific tag you're looking for onto the format (like {TIME} for example).
+ * @param[in] id  THe id related to this @b tag.
  * 
- * @var mlog::__details::__Header::TAG_TYPE_ID
- * The id for the splitting for {TYPE}.
- * 
- * @var mlog::__details::__Header::TAG_THREAD_ID
- * The id for the splitting for {THREAD}.
- * 
- * @var mlog::__details::__Header::TAG_TYPE
- * The text tag {TYPE} for the format string.
- * 
- * @var mlog::__details::__Header::TAG_THREAD
- * The text tag {THREAD} for the format string.
- * 
- * @var mlog::__details::__Header::TAG_DATE
- * The text tag {DATE} for the format string.
+ * @fn mlog::__details::__Header::operator std::string(void)
+ * Convert the header into the unparsed format automaticaly.
  * 
  * @var mlog::__details::__Header::pattern
  * The input format (unmodified, tags are still in).
  * 
  * @var mlog::__details::__Header::chunks
  * The steps instructions to display the header.
- * 
- * @def SPLIT_AND_MERGE
- * It was tedious to repeat code chunks, so it does it for me.
- * It wraps a call to this->splitAndMerge
  * 
  * @class mlog::__details::__Static_declarer
  * Embeds static members for mlog::Options, it gets them by inheritance.
@@ -428,6 +445,11 @@
  * @param[in] args The other arguments left.
  * @pre @b a must defines @b operator<< with a @b std::ostream
  * 
+ * @fn void mlog::__details::_Logger::_print_(const Actual& a)
+ * Prints Only one argument, without spacing.
+ * @param[in] a The last argument of the list.
+ * @pre @b a must defines @b operator<< with a @b std::ostream
+ * 
  * @fn void mlog::__details::_Logger::assertValidity(void)
  * Checks for the validity of the current output stream.
  * @throw std::ios_base::failure If the stream isn't good or is nullptr.
@@ -444,10 +466,10 @@
  * Implements the log type method.
  * It will also turn off this function if the enableTYPE is false or enableLog is false.
  * 
- * @def DUMP_LINE
+ * @def MTL_LOG_DUMP_LINE
  * More easy to concentrate code duplication inside a macro.
  * 
- * @def READ_BOOL
+ * @def MTL_LOG_READ_BOOL
  * Read a boolean value and set Options as well.
  * 
  * @endif

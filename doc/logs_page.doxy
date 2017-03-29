@@ -53,11 +53,11 @@
  * 
  * @section  id_usage  III. Use it
  * This is simple, there isn't too many functions (just 5 at the moment) :
- *   - mlog::debug()
- *   - mlog::info()
- *   - mlog::warning()
- *   - mlog::error()
- *   - mlog::fatal()
+ *   - @b mlog::debug() For developers only.
+ *   - @b mlog::info() To display advancement for example.
+ *   - @b mlog::warning() To warn about something, like a deprecated functionality for example.
+ *   - @b mlog::error() To display a backupable error, which usualy don't abor tthe program.
+ *   - @b mlog::fatal() To display an unbackupable error, which kill the program.
  * 
  * There purpose are just semantic.@n
  * Ok, let's call them :
@@ -70,11 +70,11 @@
  * @endcode
  * And checkout what's coming out :
  * @code
- * [DEBUG   03/18/2017 18:56:53 ] : 
- * [INFO    03/18/2017 18:56:53 ] : 
- * [WARNING 03/18/2017 18:56:53 ] : 
- * [ERROR   03/18/2017 18:56:53 ] : 
- * [FATAL   03/18/2017 18:56:53 ] : 
+ * [DEBUG   03/18/2017 18:56:53] : 
+ * [INFO    03/18/2017 18:56:53] : 
+ * [WARNING 03/18/2017 18:56:53] : 
+ * [ERROR   03/18/2017 18:56:53] : 
+ * [FATAL   03/18/2017 18:56:53] : 
  * @endcode
  * Fine, but so far, we don't provide any additionnal information, so it just displays the @b header.
  * Talking about header, a log line is compound of two part :
@@ -175,24 +175,31 @@
  *      <td>true</td>
  *  </tr>
  *  <tr>
+ *      <td>mlog::Options::enableHeader()</td>
+ *      <td>mlog::Options::isHeaderEnabled()</td>
+ *      <td>Switch on/off the @b header on the future log lines.</td>
+ *      <td>true</td>
+ *  </tr>
+ *  <tr>
  *      <td>mlog::Options::setOutputStream()</td>
- *      <td>None</td>
+ *      <td>mlog::Options::getOutputStream()</td>
  *      <td>Change the output stream for displaying logs</td>
  *      <td>&std::cout</td>
  *  </tr>
  *  <tr>
  *      <td>mlog::Options::setFormat()</td>
- *      <td>None</td>
+ *      <td>mlog::Options::getFormat()</td>
  *      <td>
  *          Change the header format.<br />Each characters count, space included<br />It uses special tags :
  *          <table>
  *              <tr><td><b>Tag</b></td><td><b>Description</b></td></tr>
  *              <tr><td>{TYPE}</td>  <td>Show log type here</td></tr>
- *              <tr><td>{DATE}</td>  <td>Show the date MM/DD/YYYY HH:MM:SS</td></tr>
+ *              <tr><td>{DATE}</td>  <td>Show the date @b MM/DD/YYYY</td></tr>
+ *              <tr><td>{TIME}</td>  <td>Show the time @b HH:MM:SS</td></tr>
  *              <tr><td>{THREAD}</td><td>If multithreading enabled only.<br />the hexadecimal thread number which call the log</td></tr>
  *          </table>
  *      </td>
- *      <td>[{TYPE} {DATE}] : </td>
+ *      <td>[{TYPE} {DATE} {TIME}] : </td>
  *  </tr>
  * </table>
  * Refers to documentation of mlog::Options for further informations.
@@ -233,12 +240,13 @@
  * ENABLE_ERROR:bool      = 1
  * ENABLE_FATAL:bool      = 1
  * ENABLE_DEBUG:bool      = 1
- * HEADER_FORMAT:string   =[{TYPE} {DATE}] : 
+ * ENABLE_HEADER:bool     = 1
+ * HEADER_FORMAT:string   =[{TYPE} {DATE} {TIME}] : 
  * @endcode
  * <b>Because of a poor man parsing function, never change the line order !</b>@n
  * Everything is self explonatory :
- *   - @b :bool waits for @b 1 or @b 0
- *   - @b :string for ... a string.
+ *   - @b :bool waits for @b 1 or @b 0, right after the equal character.
+ *   - @b :string for ... a string, right after the equal character.
  * 
  * The rules are the same than the in line configuration (see above).
  * 
@@ -256,6 +264,7 @@
  *  <tr><td><b>mlog::Options::enableError()</b></td>    <td><b>ENABLE_ERROR:bool</b></td></tr>
  *  <tr><td><b>mlog::Options::enableFatal()</b></td>    <td><b>ENABLE_FATAL:bool</b></td></tr>
  *  <tr><td><b>mlog::Options::enableDebug()</b></td>    <td><b>ENABLE_DEBUG:bool</b></td></tr>
+ *  <tr><td><b>mlog::Options::enableHeader()</b></td>   <td><b>ENABLE_HEADER:string</b></td></tr>
  *  <tr><td><b>mlog::Options::setFormat()</b></td>      <td><b>HEADER_FORMAT:string</b></td></tr>
  * </table>
  * 
@@ -273,7 +282,6 @@
  * @endcode
  * 
  * @section id_license  VI. License
- * @subsection sid_licence VI.1. BSD
  * Copyright 2017 MTLCRBN@n
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
  *   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -292,5 +300,4 @@
  * <b>MTLCRBN</b>@n
  * <b>Zelnes</b>, for the english checks of this documentation (thanks buddy), and for some ideas.@n
  * <a href="http://www.iconninja.com/tag/log-out-icon">IconNinja</a>, for this beautiful logo :D.
- * 
  */
