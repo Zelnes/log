@@ -293,11 +293,11 @@ namespace MTL_LOG_NAMESPACE
                 return MTL_LOG_NAMESPACE::Options::FORMAT;
             }
 #           ifdef _REENTRANT
-            static void addThreadName(const std::thread::id& id, const std::string& name)
+            static void bindThreadName(const std::thread::id& id, const std::string& name)
             {
                 MTL_LOG_NAMESPACE::Options::THREAD_NAME.insert(std::make_pair(id, name));
             }
-            static void delThreadName(const std::thread::id& id)
+            static void unbidThreadName(const std::thread::id& id)
             {
                 MTL_LOG_NAMESPACE::Options::THREAD_NAME.erase(id);
             }
