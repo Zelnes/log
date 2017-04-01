@@ -88,7 +88,7 @@ namespace MTL_LOG_NAMESPACE
                 void display(std::ostream& out, const std::string& type, const char *const color,
                              const char *const nocolor, bool colorEnabled, const void* threads_names)
                 {
-#                   ifdef _REENTRANT
+#                   ifdef MTL_LOG_WITH_THREADS
                     const std::map<std::thread::id, std::string>* thread = reinterpret_cast<const std::map<std::thread::id, std::string>*>(threads_names);
 #                   endif
                     for(const auto& p : this->chunks)
@@ -114,7 +114,7 @@ namespace MTL_LOG_NAMESPACE
                                 break;
                             }
                             case -3:
-#                               ifdef _REENTRANT
+#                               ifdef MTL_LOG_WITH_THREADS
                                 try
                                 {
                                     out << (*thread).at(std::this_thread::get_id());
@@ -202,7 +202,7 @@ namespace MTL_LOG_NAMESPACE
                 static bool                                   ENABLE_ALPHA_BOOL;
                 static MTL_LOG_NAMESPACE::__details::__Header FORMAT;
                 
-#               ifdef _REENTRANT
+#               ifdef MTL_LOG_WITH_THREADS
                 static std::map<std::thread::id, std::string> THREAD_NAME;
 #               endif
             private:
@@ -292,7 +292,7 @@ namespace MTL_LOG_NAMESPACE
                 MTL_LOG_LOCK;
                 return MTL_LOG_NAMESPACE::Options::FORMAT;
             }
-#           ifdef _REENTRANT
+#           ifdef MTL_LOG_WITH_THREADS
             static void bindThreadName(const std::thread::id& id, const std::string& name)
             {
                 MTL_LOG_NAMESPACE::Options::THREAD_NAME.insert(std::make_pair(id, name));
@@ -355,7 +355,7 @@ namespace MTL_LOG_NAMESPACE
                                                                    tag, color,
                                                                    MTL_LOG_NAMESPACE::Options::C_BLANK,
                                                                    MTL_LOG_NAMESPACE::Options::isColorEnabled(),
-#                                                                  ifdef _REENTRANT
+#                                                                  ifdef MTL_LOG_WITH_THREADS
                                                                    &MTL_LOG_NAMESPACE::Options::THREAD_NAME
 #                                                                  else
                                                                    nullptr
