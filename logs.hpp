@@ -292,16 +292,21 @@ namespace MTL_LOG_NAMESPACE
                 MTL_LOG_LOCK;
                 return MTL_LOG_NAMESPACE::Options::FORMAT;
             }
-#           ifdef MTL_LOG_WITH_THREADS
-            static void bindThreadName(const std::thread::id& id, const std::string& name)
+
+            static void bindThreadName(const std::string& name)
             {
-                MTL_LOG_NAMESPACE::Options::THREAD_NAME.insert(std::make_pair(id, name));
+#               ifdef MTL_LOG_WITH_THREADS
+                MTL_LOG_LOCK;
+                MTL_LOG_NAMESPACE::Options::THREAD_NAME.insert(std::make_pair(std::this_thread::get_id(), name));
+#               endif
             }
-            static void unbidThreadName(const std::thread::id& id)
+            static void unbidThreadName()
             {
-                MTL_LOG_NAMESPACE::Options::THREAD_NAME.erase(id);
+#               ifdef MTL_LOG_WITH_THREADS
+                MTL_LOG_LOCK;
+                MTL_LOG_NAMESPACE::Options::THREAD_NAME.erase(std::this_thread::get_id());
+#               endif
             }
-#           endif
     };
     
 #   undef MTL_LOG_GET_SET
