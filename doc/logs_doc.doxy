@@ -277,14 +277,14 @@
  *
  * @param[in]  id    The identifier returned by std::thread::get_id()
  * @param[in]  name  Name that should be displayed instead of an id
- * @see mlog::Options::unbidThreadName
+ * @see mlog::Options::unbindThreadName
  * 
- * @fn void mlog::Options::unbidThreadName(const std::thread::id& id)
+ * @fn void mlog::Options::unbindThreadName(const std::thread::id& id)
  * Unbinds the thread id if it exists. This way, using the {THREAD}
  * tag will print the thread id
  *
  * @param[in]  id    The identifier returned by std::thread::get_id()
- * @see mlog::Options::bidThreadName
+ * @see mlog::Options::bindThreadName
  */
 
 // Developpers part, enable HIDE_THIS_DOXYGEN to see it
@@ -429,7 +429,7 @@
  * @var mlog::__details::__Static_declarer::THREAD_NAME
  * The container for bounds between thread id and a string value
  * @see mlog::Options::bindThreadName
- * @see mlog::Options::unbidThreadName
+ * @see mlog::Options::unbindThreadName
  * 
  * @var mlog::__details::__Static_declarer::MUTEX
  * A mutex to guaranty mutual exclusion for logging.
