@@ -270,6 +270,21 @@
  *   - {TYPE}   To display here the type of the log.
  *   - {DATE}   To display here the date of the log.
  *   - {THREAD} To display here the emiter thread number (only if -pthread or -fopenmp).
+ * 
+ * @fn void mlog::Options::bindThreadName(const std::thread::id& id, const std::string& name)
+ * Binds the thread id to the name so that when using the tag
+ * {THREAD} the name given is used instead of an hexadecimal output
+ *
+ * @param[in]  id    The identifier returned by std::thread::get_id()
+ * @param[in]  name  Name that should be displayed instead of an id
+ * @see mlog::Options::unbindThreadName
+ * 
+ * @fn void mlog::Options::unbindThreadName(const std::thread::id& id)
+ * Unbinds the thread id if it exists. This way, using the {THREAD}
+ * tag will print the thread id
+ *
+ * @param[in]  id    The identifier returned by std::thread::get_id()
+ * @see mlog::Options::bindThreadName
  */
 
 // Developpers part, enable HIDE_THIS_DOXYGEN to see it
@@ -410,6 +425,11 @@
  * 
  * @var mlog::__details::__Static_declarer::FORMAT
  * The header format (<b>"[{TYPE} {DATE}] : "</b> by default).
+ * 
+ * @var mlog::__details::__Static_declarer::THREAD_NAME
+ * The container for bounds between thread id and a string value
+ * @see mlog::Options::bindThreadName
+ * @see mlog::Options::unbindThreadName
  * 
  * @var mlog::__details::__Static_declarer::MUTEX
  * A mutex to guaranty mutual exclusion for logging.
